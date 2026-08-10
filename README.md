@@ -38,15 +38,18 @@ schema and seed data from the SQL editor (or the Supabase CLI):
 supabase/migrations/0001_init_schema.sql
 supabase/migrations/0002_add_challenges.sql
 supabase/migrations/0003_project_concept_link.sql
+supabase/migrations/0004_lessons_and_concept_challenges.sql
 # seed data, in order
-supabase/seed.sql                     # phases, original 9 mini/spine projects, flashcards
-supabase/seed_challenges.sql          # 18 auto-graded coding challenges
-supabase/seed_curriculum_expanded.sql # 75 concepts + their micro-projects
+supabase/seed.sql                              # phases, original 9 mini/spine projects, flashcards
+supabase/seed_challenges.sql                    # 18 phase-level auto-graded challenges
+supabase/seed_curriculum_expanded.sql           # 75 concepts + their micro-projects
+supabase/seed_lessons_and_concept_challenges.sql # lesson content + 4 challenges per concept (300 total)
 ```
 
 All files have been validated against a local Postgres instance, and every
-challenge's reference solution was run end-to-end through Pyodide to
-confirm its tests actually pass.
+challenge's reference solution -- all 318 of them, phase-level and
+concept-level -- was run end-to-end through Pyodide to confirm its tests
+actually pass.
 
 **`seed_curriculum_expanded.sql` replaces the `concepts` table contents**
 (it `DELETE`s the original ~45 broad concepts and inserts the expanded set
@@ -54,7 +57,9 @@ of 75, each linked to its own micro-project). It does not touch mini/spine
 projects, challenges, flashcards, or journal entries. If you've already
 been using the app and marked progress on the original concepts, that
 progress is lost when you run it -- run it once, early, rather than
-re-running it later.
+re-running it later. `seed_lessons_and_concept_challenges.sql` only adds
+lesson content and new challenge rows -- it's safe to run (once) any time
+after the concepts it references exist.
 
 ### 3. Configure environment variables
 
@@ -89,9 +94,13 @@ other page requires a live database.
   shows its own status toggle plus, when one exists, its linked
   micro-project nested right underneath, followed by that phase's
   integrative mini-project and spine milestone
+- `/learn/[conceptId]` -- a concept's dedicated lesson page: written
+  explanation with code examples, an embedded playground pre-seeded with
+  the lesson's first example to practice in, the concept's micro-project,
+  and up to 4 auto-graded challenges to solidify it
 - `/challenges`, `/challenges/[challengeId]` -- auto-graded coding
-  exercises per phase; write a solution, hit Run Tests, and it's marked
-  solved automatically when every case passes
+  exercises (phase-level and concept-level); write a solution, hit Run
+  Tests, and it's marked solved automatically when every case passes
 - `/playground` -- Pyodide-powered Python editor and console
 - `/spine` -- read-only log of the spine project's evolution across phases
 - `/review` -- SM-2-style spaced repetition flashcard review
@@ -116,3 +125,12 @@ other page requires a live database.
   projects set `concept_id`; mini/spine projects leave it null.
 - `concepts.order_index` controls display order within a phase (concepts
   are taught in sequence, not alphabetically).
+- `concepts.lesson_content` uses a small hand-written markdown subset
+  (`##` headings, ` ```-fenced ` code blocks, `- ` lists, `` `inline code` ``)
+  rendered by `MarkdownLite` -- not a full markdown parser, just enough
+  for hand-authored lessons without pulling in a dependency.
+- `PyodideEditor` is the shared run/console/loading core behind
+  `PlaygroundClient`, `LessonPlayground`, and `ChallengeRunner` -- it
+  takes a `buildRunCode` hook to transform edited code before executing
+  (challenges append their test harness) and an `onComplete` hook to
+  react to the full output (challenges parse pass/fail from it).
