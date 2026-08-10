@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { signIn } from "./actions";
+import { signUp } from "./actions";
 
-export default function LoginPage() {
-  const [error, formAction, pending] = useActionState(signIn, null);
+export default function SignUpPage() {
+  const [state, formAction, pending] = useActionState(signUp, null);
 
   return (
     <main className="flex flex-1 items-center justify-center px-4">
@@ -17,7 +17,9 @@ export default function LoginPage() {
           <h1 className="text-xl font-semibold text-slate-100">
             Python Mastery Tracker
           </h1>
-          <p className="mt-1 text-sm text-slate-400">Sign in to continue.</p>
+          <p className="mt-1 text-sm text-slate-400">
+            Create an account (testing only -- no email verification).
+          </p>
         </div>
 
         <div className="space-y-1">
@@ -43,25 +45,30 @@ export default function LoginPage() {
             name="password"
             type="password"
             required
-            autoComplete="current-password"
+            minLength={6}
+            autoComplete="new-password"
             className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none focus:border-emerald-500"
           />
         </div>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {state && (
+          <p className={`text-sm ${state.type === "error" ? "text-red-400" : "text-amber-300"}`}>
+            {state.text}
+          </p>
+        )}
 
         <button
           type="submit"
           disabled={pending}
           className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
         >
-          {pending ? "Signing in..." : "Sign in"}
+          {pending ? "Creating account..." : "Create account"}
         </button>
 
         <p className="text-center text-xs text-slate-500">
-          Need an account?{" "}
-          <Link href="/signup" className="text-emerald-400 hover:text-emerald-300">
-            Sign up
+          Already have an account?{" "}
+          <Link href="/login" className="text-emerald-400 hover:text-emerald-300">
+            Sign in
           </Link>
         </p>
       </form>
