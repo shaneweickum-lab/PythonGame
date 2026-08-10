@@ -1,8 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { PhaseCard } from "@/components/PhaseCard";
 import type { Concept, Phase, Project } from "@/lib/supabase/types";
 
 export default async function RoadmapPage() {
+  if (!isSupabaseConfigured()) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-100">Roadmap</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Zero to expert, phase by phase. Expand a phase to toggle progress
+            on its concepts and projects.
+          </p>
+        </div>
+        <NotConfiguredNotice />
+      </div>
+    );
+  }
+
   const supabase = await createClient();
 
   const [{ data: phases }, { data: concepts }, { data: projects }] =

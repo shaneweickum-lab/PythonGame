@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { StatusToggle } from "@/components/StatusToggle";
 import { ProgressBar } from "@/components/ProgressBar";
 import { JournalEntryForm } from "@/components/JournalEntryForm";
@@ -10,6 +12,17 @@ import type { Concept, Phase, Project } from "@/lib/supabase/types";
 export default async function PhaseDetailPage({
   params,
 }: PageProps<"/roadmap/[phaseId]">) {
+  if (!isSupabaseConfigured()) {
+    return (
+      <div className="space-y-6">
+        <Link href="/roadmap" className="text-xs text-slate-500 hover:text-slate-300">
+          ← Back to roadmap
+        </Link>
+        <NotConfiguredNotice />
+      </div>
+    );
+  }
+
   const { phaseId } = await params;
   const supabase = await createClient();
 
