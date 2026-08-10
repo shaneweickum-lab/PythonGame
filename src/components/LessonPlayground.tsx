@@ -11,7 +11,7 @@ export function LessonPlayground({ starterCode }: { starterCode: string }) {
       <p className="text-sm text-slate-400">
         Try it yourself -- tweak the example, break it, fix it, run it again.
       </p>
-      <PyodideEditor initialCode={starterCode} height="h-64" />
+      <PyodideEditor initialCode={starterCode} height="16rem" />
     </div>
   );
 }

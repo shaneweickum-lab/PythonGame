@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { python } from "@codemirror/lang-python";
+import { indentUnit } from "@codemirror/language";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { keymap } from "@codemirror/view";
+import { indentWithTab } from "@codemirror/commands";
 import { getPyodide } from "@/lib/pyodide";
 import type { PyodideAPI } from "pyodide";
 
@@ -9,6 +15,8 @@ type LoadStatus = "loading" | "ready" | "error";
 export type PyodideEditorHandle = {
   getCode: () => string;
 };
+
+const EDITOR_EXTENSIONS = [python(), indentUnit.of("    "), keymap.of([indentWithTab])];
 
 export const PyodideEditor = forwardRef<
   PyodideEditorHandle,
@@ -29,7 +37,7 @@ export const PyodideEditor = forwardRef<
     initialCode,
     editorLabel = "Editor",
     consoleLabel = "Console",
-    height = "h-80",
+    height = "20rem",
     runButtonLabel = "Run ▶",
     extraControls,
     buildRunCode,
@@ -104,12 +112,16 @@ export const PyodideEditor = forwardRef<
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             {editorLabel}
           </label>
-          <textarea
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            spellCheck={false}
-            className={`${height} w-full resize-y rounded-md border border-slate-700 bg-slate-900 p-3 font-mono text-sm text-slate-100 outline-none focus:border-emerald-500`}
-          />
+          <div className="overflow-hidden rounded-md border border-slate-700 focus-within:border-emerald-500 [&_.cm-editor]:h-full [&_.cm-scroller]:font-mono [&_.cm-scroller]:text-sm">
+            <CodeMirror
+              value={code}
+              onChange={(value) => setCode(value)}
+              height={height}
+              theme={oneDark}
+              basicSetup={{ tabSize: 4 }}
+              extensions={EDITOR_EXTENSIONS}
+            />
+          </div>
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
@@ -127,7 +139,10 @@ export const PyodideEditor = forwardRef<
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             {consoleLabel}
           </label>
-          <pre className={`${height} w-full overflow-auto rounded-md border border-slate-800 bg-black p-3 font-mono text-sm whitespace-pre-wrap text-slate-200`}>
+          <pre
+            style={{ height }}
+            className="w-full overflow-auto rounded-md border border-slate-800 bg-black p-3 font-mono text-sm whitespace-pre-wrap text-slate-200"
+          >
             {output || (running ? "" : "Output will appear here.")}
           </pre>
         </div>
