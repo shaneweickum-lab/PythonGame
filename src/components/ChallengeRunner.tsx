@@ -32,7 +32,11 @@ export function ChallengeRunner({ challenge }: { challenge: Challenge }) {
       const supabase = createClient();
       const { error } = await supabase
         .from("challenges")
-        .update({ status: nextStatus, code_snapshot: editorRef.current.getCode() })
+        .update({
+          status: nextStatus,
+          code_snapshot: editorRef.current.getCode(),
+          completed_at: nextStatus === "done" ? new Date().toISOString() : challenge.completed_at,
+        })
         .eq("id", challenge.id);
 
       if (error) {

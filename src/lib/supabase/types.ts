@@ -18,6 +18,7 @@ export type Concept = {
   notes: string | null;
   status: ConceptStatus;
   lesson_content: string | null;
+  completed_at: string | null;
 };
 
 export type Project = {
@@ -30,6 +31,7 @@ export type Project = {
   status: ConceptStatus;
   code_snapshot: string | null;
   notes: string | null;
+  completed_at: string | null;
 };
 
 export type Flashcard = {
@@ -63,6 +65,7 @@ export type Challenge = {
   test_code: string;
   status: ConceptStatus;
   code_snapshot: string | null;
+  completed_at: string | null;
 };
 
 export type Database = {

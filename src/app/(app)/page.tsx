@@ -3,7 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { ProgressBar } from "@/components/ProgressBar";
-import type { Challenge, Concept, Phase, Project } from "@/lib/supabase/types";
+import { LevelCard } from "@/components/LevelCard";
+import { StreakCard } from "@/components/StreakCard";
+import { computeGamification } from "@/lib/gamification";
+import type { Challenge, Concept, JournalEntry, Phase, Project } from "@/lib/supabase/types";
 
 type UnfinishedItem = {
   kind: "concept" | "project" | "challenge";
@@ -36,12 +39,14 @@ export default async function DashboardPage() {
     { data: concepts },
     { data: projects },
     { data: challenges },
+    { data: journalEntries },
     { count: dueCount },
   ] = await Promise.all([
     supabase.from("phases").select("*").order("order_index"),
     supabase.from("concepts").select("*"),
     supabase.from("projects").select("*"),
     supabase.from("challenges").select("*"),
+    supabase.from("journal_entries").select("*"),
     supabase
       .from("flashcards")
       .select("*", { count: "exact", head: true })
@@ -52,6 +57,15 @@ export default async function DashboardPage() {
   const typedConcepts = (concepts ?? []) as Concept[];
   const typedProjects = (projects ?? []) as Project[];
   const typedChallenges = (challenges ?? []) as Challenge[];
+  const typedJournalEntries = (journalEntries ?? []) as JournalEntry[];
+
+  const { level, streak } = computeGamification({
+    phases: typedPhases,
+    concepts: typedConcepts,
+    projects: typedProjects,
+    challenges: typedChallenges,
+    journalEntries: typedJournalEntries,
+  });
 
   const totalItems = typedConcepts.length + typedProjects.length + typedChallenges.length;
   const doneItems =
@@ -114,10 +128,24 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <section className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+          <LevelCard level={level} compact />
+        </section>
+        <section className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+          <StreakCard streak={streak} />
+        </section>
+      </div>
+
       <section className="rounded-lg border border-slate-800 bg-slate-900 p-5">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Overall progress
-        </h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Overall progress
+          </h2>
+          <Link href="/achievements" className="text-xs font-medium text-emerald-400 hover:text-emerald-300">
+            View achievements →
+          </Link>
+        </div>
         <ProgressBar done={doneItems} total={totalItems} className="mt-3" />
       </section>
 
@@ -179,6 +207,7 @@ export default async function DashboardPage() {
             { href: "/playground", label: "Playground", desc: "Run Python in the browser" },
             { href: "/spine", label: "Spine Project", desc: "One project, every phase" },
             { href: "/journal", label: "Journal", desc: "All reflections in one place" },
+            { href: "/achievements", label: "Achievements", desc: "Level, streak, and badges" },
           ].map((link) => (
             <Link
               key={link.href}

@@ -45,7 +45,7 @@ export function StatusToggle({
       const supabase = createClient();
       const { error } = await supabase
         .from(table)
-        .update({ status: next })
+        .update({ status: next, completed_at: next === "done" ? new Date().toISOString() : null })
         .eq("id", id);
 
       if (error) {
