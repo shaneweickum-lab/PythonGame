@@ -1,23 +1,23 @@
 export type ConceptStatus = "not_started" | "in_progress" | "done";
 export type ProjectType = "mini" | "spine";
 
-export interface Phase {
+export type Phase = {
   id: string;
   order_index: number;
   title: string;
   summary: string | null;
   is_spine_track: boolean;
-}
+};
 
-export interface Concept {
+export type Concept = {
   id: string;
   phase_id: string;
   title: string;
   notes: string | null;
   status: ConceptStatus;
-}
+};
 
-export interface Project {
+export type Project = {
   id: string;
   phase_id: string;
   title: string;
@@ -26,9 +26,9 @@ export interface Project {
   status: ConceptStatus;
   code_snapshot: string | null;
   notes: string | null;
-}
+};
 
-export interface Flashcard {
+export type Flashcard = {
   id: string;
   phase_id: string | null;
   question: string;
@@ -37,44 +37,51 @@ export interface Flashcard {
   interval_days: number;
   next_review_at: string;
   last_reviewed_at: string | null;
-}
+};
 
-export interface JournalEntry {
+export type JournalEntry = {
   id: string;
   phase_id: string | null;
   content: string;
   created_at: string;
-}
+};
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       phases: {
         Row: Phase;
         Insert: Partial<Phase> & Pick<Phase, "order_index" | "title">;
         Update: Partial<Phase>;
+        Relationships: [];
       };
       concepts: {
         Row: Concept;
         Insert: Partial<Concept> & Pick<Concept, "phase_id" | "title">;
         Update: Partial<Concept>;
+        Relationships: [];
       };
       projects: {
         Row: Project;
         Insert: Partial<Project> &
           Pick<Project, "phase_id" | "title" | "project_type">;
         Update: Partial<Project>;
+        Relationships: [];
       };
       flashcards: {
         Row: Flashcard;
         Insert: Partial<Flashcard> & Pick<Flashcard, "question" | "answer">;
         Update: Partial<Flashcard>;
+        Relationships: [];
       };
       journal_entries: {
         Row: JournalEntry;
         Insert: Partial<JournalEntry> & Pick<JournalEntry, "content">;
         Update: Partial<JournalEntry>;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
   };
-}
+};
