@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { getPyodide } from "@/lib/pyodide";
-import type { PyodideAPI } from "pyodide";
+import { PyodideEditor, type PyodideEditorHandle } from "@/components/PyodideEditor";
 
 const STARTER_CODE = `print("Hello, Python!")
 
@@ -12,36 +11,17 @@ for i in range(5):
     print(i ** 2)
 `;
 
-type LoadStatus = "loading" | "ready" | "error";
-
 type ProjectOption = {
   id: string;
   title: string;
 };
 
 export function PlaygroundClient() {
-  const [status, setStatus] = useState<LoadStatus>("loading");
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [code, setCode] = useState(STARTER_CODE);
-  const [output, setOutput] = useState("");
-  const [running, setRunning] = useState(false);
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  const pyodideRef = useRef<PyodideAPI | null>(null);
-
-  useEffect(() => {
-    getPyodide()
-      .then((pyodide) => {
-        pyodideRef.current = pyodide;
-        setStatus("ready");
-      })
-      .catch((err) => {
-        setLoadError(err instanceof Error ? err.message : String(err));
-        setStatus("error");
-      });
-  }, []);
+  const editorRef = useRef<PyodideEditorHandle>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -55,32 +35,13 @@ export function PlaygroundClient() {
       });
   }, []);
 
-  async function runCode() {
-    const pyodide = pyodideRef.current;
-    if (!pyodide || running) return;
-
-    setRunning(true);
-    setOutput("");
-
-    pyodide.setStdout({ batched: (msg) => setOutput((o) => o + msg + "\n") });
-    pyodide.setStderr({ batched: (msg) => setOutput((o) => o + msg + "\n") });
-
-    try {
-      await pyodide.runPythonAsync(code);
-    } catch (err) {
-      setOutput((o) => o + (err instanceof Error ? err.message : String(err)) + "\n");
-    } finally {
-      setRunning(false);
-    }
-  }
-
   async function saveToProject() {
-    if (!selectedProjectId) return;
+    if (!selectedProjectId || !editorRef.current) return;
     setSaveState("saving");
     const supabase = createClient();
     const { error } = await supabase
       .from("projects")
-      .update({ code_snapshot: code })
+      .update({ code_snapshot: editorRef.current.getCode() })
       .eq("id", selectedProjectId);
 
     setSaveState(error ? "error" : "saved");
@@ -99,39 +60,11 @@ export function PlaygroundClient() {
         </p>
       </div>
 
-      {status === "loading" && (
-        <div className="rounded-md border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-slate-400">
-          Loading Python runtime... this is a few MB and only happens once per
-          session.
-        </div>
-      )}
-      {status === "error" && (
-        <div className="rounded-md border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300">
-          Failed to load Pyodide{loadError ? `: ${loadError}` : "."}
-        </div>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Editor
-          </label>
-          <textarea
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            spellCheck={false}
-            className="h-80 w-full resize-y rounded-md border border-slate-700 bg-slate-900 p-3 font-mono text-sm text-slate-100 outline-none focus:border-emerald-500"
-          />
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={runCode}
-              disabled={status !== "ready" || running}
-              className="rounded-md bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
-            >
-              {running ? "Running..." : "Run ▶"}
-            </button>
-
+      <PyodideEditor
+        ref={editorRef}
+        initialCode={STARTER_CODE}
+        extraControls={
+          <>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
@@ -158,18 +91,9 @@ export function PlaygroundClient() {
                     ? "Failed"
                     : "Save"}
             </button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Console
-          </label>
-          <pre className="h-80 w-full overflow-auto rounded-md border border-slate-800 bg-black p-3 font-mono text-sm whitespace-pre-wrap text-slate-200">
-            {output || (running ? "" : "Output will appear here.")}
-          </pre>
-        </div>
-      </div>
+          </>
+        }
+      />
     </div>
   );
 }

@@ -66,7 +66,12 @@ export function PhaseCard({
                 return (
                   <li key={c.id} className="rounded-md px-2 py-1.5 hover:bg-slate-800/50">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-slate-200">{c.title}</span>
+                      <Link
+                        href={`/learn/${c.id}`}
+                        className="text-sm text-slate-200 hover:text-emerald-400 hover:underline"
+                      >
+                        {c.title}
+                      </Link>
                       <StatusToggle table="concepts" id={c.id} status={c.status} />
                     </div>
                     {micro && (

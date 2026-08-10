@@ -17,6 +17,7 @@ export type Concept = {
   title: string;
   notes: string | null;
   status: ConceptStatus;
+  lesson_content: string | null;
 };
 
 export type Project = {
@@ -52,6 +53,7 @@ export type JournalEntry = {
 export type Challenge = {
   id: string;
   phase_id: string | null;
+  concept_id: string | null;
   order_index: number;
   title: string;
   difficulty: ChallengeDifficulty;

@@ -100,7 +100,12 @@ export default async function PhaseDetailPage({
                 className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-slate-200">{c.title}</span>
+                  <Link
+                    href={`/learn/${c.id}`}
+                    className="text-sm text-slate-200 hover:text-emerald-400 hover:underline"
+                  >
+                    {c.title}
+                  </Link>
                   <StatusToggle table="concepts" id={c.id} status={c.status} />
                 </div>
                 {micro && (
