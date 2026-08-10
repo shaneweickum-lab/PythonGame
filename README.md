@@ -133,4 +133,13 @@ other page requires a live database.
   `PlaygroundClient`, `LessonPlayground`, and `ChallengeRunner` -- it
   takes a `buildRunCode` hook to transform edited code before executing
   (challenges append their test harness) and an `onComplete` hook to
-  react to the full output (challenges parse pass/fail from it).
+  react to the full output (challenges parse pass/fail from it). It
+  renders CodeMirror 6 (Python mode, oneDark theme) with Tab bound to a
+  4-space indent instead of moving focus.
+- The app is installable as a PWA: `src/app/manifest.ts` generates the
+  web app manifest and `src/app/apple-icon.png` covers the iOS home
+  screen icon (both generated from a source SVG via `sharp`, see git
+  history -- there's no ongoing build step for them, they're committed
+  as static assets). On screens below Tailwind's `md` breakpoint, the
+  top nav (`NavLinks`) hides and a fixed bottom tab bar (`MobileTabBar`)
+  takes over, matching a native mobile app's navigation pattern.

@@ -3,24 +3,27 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const LINKS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/roadmap", label: "Roadmap" },
-  { href: "/challenges", label: "Challenges" },
-  { href: "/playground", label: "Playground" },
-  { href: "/spine", label: "Spine" },
-  { href: "/review", label: "Review" },
-  { href: "/journal", label: "Journal" },
+export const NAV_LINKS = [
+  { href: "/", label: "Dashboard", icon: "🏠" },
+  { href: "/roadmap", label: "Roadmap", icon: "🗺️" },
+  { href: "/challenges", label: "Challenges", icon: "🧩" },
+  { href: "/playground", label: "Playground", icon: "▶️" },
+  { href: "/spine", label: "Spine", icon: "🌳" },
+  { href: "/review", label: "Review", icon: "🔁" },
+  { href: "/journal", label: "Journal", icon: "📓" },
 ];
+
+export function isNavLinkActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
 
 export function NavLinks() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-wrap items-center gap-1">
-      {LINKS.map((link) => {
-        const isActive =
-          link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+    <nav className="hidden md:flex flex-wrap items-center gap-1">
+      {NAV_LINKS.map((link) => {
+        const isActive = isNavLinkActive(pathname, link.href);
 
         return (
           <Link
