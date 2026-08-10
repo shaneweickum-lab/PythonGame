@@ -128,7 +128,12 @@ other page requires a live database.
 - `concepts.lesson_content` uses a small hand-written markdown subset
   (`##` headings, ` ```-fenced ` code blocks, `- ` lists, `` `inline code` ``)
   rendered by `MarkdownLite` -- not a full markdown parser, just enough
-  for hand-authored lessons without pulling in a dependency.
+  for hand-authored lessons without pulling in a dependency. Every lesson
+  follows the same section order: intro paragraph(s) with a code example,
+  then `## Why it matters` (concrete real-world grounding), `## Common
+  mistakes` (specific beginner pitfalls with fixes), and `## Key points`
+  (a short recap) -- meant to make each lesson self-contained enough to
+  teach the concept to someone new, not just refresh it.
 - `PyodideEditor` is the shared run/console/loading core behind
   `PlaygroundClient`, `LessonPlayground`, and `ChallengeRunner` -- it
   takes a `buildRunCode` hook to transform edited code before executing
