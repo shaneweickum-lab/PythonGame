@@ -1,70 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { getPyodide } from "@/lib/pyodide";
+import { PyodideEditor, type PyodideEditorHandle } from "@/components/PyodideEditor";
 import type { Challenge } from "@/lib/supabase/types";
-import type { PyodideAPI } from "pyodide";
-
-type LoadStatus = "loading" | "ready" | "error";
 
 const SUMMARY_RE = /^(\d+)\/(\d+) tests passed$/m;
 
 export function ChallengeRunner({ challenge }: { challenge: Challenge }) {
-  const [status, setStatus] = useState<LoadStatus>("loading");
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [code, setCode] = useState(challenge.code_snapshot || challenge.starter_code);
-  const [output, setOutput] = useState("");
-  const [running, setRunning] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [result, setResult] = useState<"passed" | "failed" | null>(null);
   const [challengeStatus, setChallengeStatus] = useState(challenge.status);
   const [saveError, setSaveError] = useState(false);
 
-  const pyodideRef = useRef<PyodideAPI | null>(null);
+  const editorRef = useRef<PyodideEditorHandle>(null);
 
-  useEffect(() => {
-    getPyodide()
-      .then((pyodide) => {
-        pyodideRef.current = pyodide;
-        setStatus("ready");
-      })
-      .catch((err) => {
-        setLoadError(err instanceof Error ? err.message : String(err));
-        setStatus("error");
-      });
-  }, []);
-
-  async function runTests() {
-    const pyodide = pyodideRef.current;
-    if (!pyodide || running) return;
-
-    setRunning(true);
-    setOutput("");
-    setResult(null);
+  async function handleComplete(output: string) {
     setSaveError(false);
-
-    let collected = "";
-    const appendLine = (msg: string) => {
-      collected += msg + "\n";
-      setOutput(collected);
-    };
-    pyodide.setStdout({ batched: appendLine });
-    pyodide.setStderr({ batched: appendLine });
-
-    let allPassed = false;
-    try {
-      await pyodide.runPythonAsync(`${code}\n${challenge.test_code}`);
-      const match = collected.match(SUMMARY_RE);
-      allPassed = Boolean(match && match[1] === match[2]);
-      setResult(allPassed ? "passed" : "failed");
-    } catch (err) {
-      appendLine(err instanceof Error ? err.message : String(err));
-      setResult("failed");
-    } finally {
-      setRunning(false);
-    }
+    const match = output.match(SUMMARY_RE);
+    const allPassed = Boolean(match && match[1] === match[2]);
+    setResult(allPassed ? "passed" : "failed");
 
     const nextStatus = allPassed
       ? "done"
@@ -72,11 +28,11 @@ export function ChallengeRunner({ challenge }: { challenge: Challenge }) {
         ? "in_progress"
         : challengeStatus;
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && editorRef.current) {
       const supabase = createClient();
       const { error } = await supabase
         .from("challenges")
-        .update({ status: nextStatus, code_snapshot: code })
+        .update({ status: nextStatus, code_snapshot: editorRef.current.getCode() })
         .eq("id", challenge.id);
 
       if (error) {
@@ -126,60 +82,30 @@ export function ChallengeRunner({ challenge }: { challenge: Challenge }) {
         )}
       </div>
 
-      {status === "loading" && (
-        <div className="rounded-md border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-slate-400">
-          Loading Python runtime...
-        </div>
-      )}
-      {status === "error" && (
-        <div className="rounded-md border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300">
-          Failed to load Pyodide{loadError ? `: ${loadError}` : "."}
-        </div>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Your solution
-          </label>
-          <textarea
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            spellCheck={false}
-            className="h-80 w-full resize-y rounded-md border border-slate-700 bg-slate-900 p-3 font-mono text-sm text-slate-100 outline-none focus:border-emerald-500"
-          />
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={runTests}
-              disabled={status !== "ready" || running}
-              className="rounded-md bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
-            >
-              {running ? "Running tests..." : "Run Tests ▶"}
-            </button>
+      <PyodideEditor
+        ref={editorRef}
+        initialCode={challenge.code_snapshot || challenge.starter_code}
+        editorLabel="Your solution"
+        consoleLabel="Test output"
+        runButtonLabel="Run Tests ▶"
+        buildRunCode={(code) => `${code}\n${challenge.test_code}`}
+        onComplete={handleComplete}
+        extraControls={
+          <>
             {result === "passed" && (
               <span className="text-sm font-medium text-emerald-400">All tests passed 🎉</span>
             )}
             {result === "failed" && (
               <span className="text-sm font-medium text-red-400">Not quite -- check the output</span>
             )}
-          </div>
-          {saveError && (
-            <p className="text-xs text-red-400">
-              Result computed locally, but saving your progress failed -- try running again.
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Test output
-          </label>
-          <pre className="h-80 w-full overflow-auto rounded-md border border-slate-800 bg-black p-3 font-mono text-sm whitespace-pre-wrap text-slate-200">
-            {output || (running ? "" : "Run the tests to see results here.")}
-          </pre>
-        </div>
-      </div>
+            {saveError && (
+              <span className="text-xs text-red-400">
+                Result computed locally, but saving your progress failed -- try running again.
+              </span>
+            )}
+          </>
+        }
+      />
     </div>
   );
 }
