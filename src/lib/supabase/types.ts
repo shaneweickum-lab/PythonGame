@@ -1,5 +1,5 @@
 export type ConceptStatus = "not_started" | "in_progress" | "done";
-export type ProjectType = "mini" | "spine";
+export type ProjectType = "micro" | "mini" | "spine";
 export type ChallengeDifficulty = "easy" | "medium" | "hard";
 
 export type Phase = {
@@ -13,6 +13,7 @@ export type Phase = {
 export type Concept = {
   id: string;
   phase_id: string;
+  order_index: number;
   title: string;
   notes: string | null;
   status: ConceptStatus;
@@ -21,6 +22,7 @@ export type Concept = {
 export type Project = {
   id: string;
   phase_id: string;
+  concept_id: string | null;
   title: string;
   description: string | null;
   project_type: ProjectType;

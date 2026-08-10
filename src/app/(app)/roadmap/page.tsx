@@ -25,7 +25,7 @@ export default async function RoadmapPage() {
   const [{ data: phases }, { data: concepts }, { data: projects }] =
     await Promise.all([
       supabase.from("phases").select("*").order("order_index"),
-      supabase.from("concepts").select("*").order("title"),
+      supabase.from("concepts").select("*").order("order_index"),
       supabase.from("projects").select("*").order("title"),
     ]);
 

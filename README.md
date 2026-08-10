@@ -1,9 +1,12 @@
 # Python Mastery Tracker
 
 A personal learning dashboard for tracking progress through a structured,
-zero-to-expert Python roadmap: a phase-by-phase roadmap with concepts and
-projects, auto-graded coding challenges, an in-browser Python playground,
-a spine-project log, spaced repetition flashcards, and a journal.
+zero-to-expert Python roadmap: a phase-by-phase curriculum of 75 concepts
+(strings, f-strings, tuples, OOP, decorators, and everything between,
+heaviest in the true-fundamentals phases) each paired with its own
+micro-project, on top of one integrative mini-project and a running
+spine-project milestone per phase, auto-graded coding challenges, an
+in-browser Python playground, spaced repetition flashcards, and a journal.
 
 ## Stack
 
@@ -31,17 +34,27 @@ Create a project at [supabase.com](https://supabase.com), then apply the
 schema and seed data from the SQL editor (or the Supabase CLI):
 
 ```bash
-# schema
+# schema, in order
 supabase/migrations/0001_init_schema.sql
 supabase/migrations/0002_add_challenges.sql
-# seed data (Phases 1-9, then their coding challenges)
-supabase/seed.sql
-supabase/seed_challenges.sql
+supabase/migrations/0003_project_concept_link.sql
+# seed data, in order
+supabase/seed.sql                     # phases, original 9 mini/spine projects, flashcards
+supabase/seed_challenges.sql          # 18 auto-graded coding challenges
+supabase/seed_curriculum_expanded.sql # 75 concepts + their micro-projects
 ```
 
-All four files have been validated against a local Postgres instance, and
-every challenge's reference solution was run end-to-end through Pyodide to
+All files have been validated against a local Postgres instance, and every
+challenge's reference solution was run end-to-end through Pyodide to
 confirm its tests actually pass.
+
+**`seed_curriculum_expanded.sql` replaces the `concepts` table contents**
+(it `DELETE`s the original ~45 broad concepts and inserts the expanded set
+of 75, each linked to its own micro-project). It does not touch mini/spine
+projects, challenges, flashcards, or journal entries. If you've already
+been using the app and marked progress on the original concepts, that
+progress is lost when you run it -- run it once, early, rather than
+re-running it later.
 
 ### 3. Configure environment variables
 
@@ -72,8 +85,10 @@ other page requires a live database.
 ## Project structure
 
 - `/` -- dashboard: overall progress, next unfinished item, due flashcards
-- `/roadmap`, `/roadmap/[phaseId]` -- phase list and detail, with status
-  toggles that persist immediately
+- `/roadmap`, `/roadmap/[phaseId]` -- phase list and detail; every concept
+  shows its own status toggle plus, when one exists, its linked
+  micro-project nested right underneath, followed by that phase's
+  integrative mini-project and spine milestone
 - `/challenges`, `/challenges/[challengeId]` -- auto-graded coding
   exercises per phase; write a solution, hit Run Tests, and it's marked
   solved automatically when every case passes
@@ -95,3 +110,9 @@ other page requires a live database.
   one `PASS:`/`FAIL:` line per case and a final `<passed>/<total> tests
   passed` summary line, which `ChallengeRunner` parses to auto-update
   status -- no separate "submit" step.
+- `projects.project_type` is `'micro'` (one per concept, reinforces that
+  concept specifically), `'mini'` (one per phase, integrates everything
+  learned in it), or `'spine'` (the running cross-phase project). Micro
+  projects set `concept_id`; mini/spine projects leave it null.
+- `concepts.order_index` controls display order within a phase (concepts
+  are taught in sequence, not alphabetically).
