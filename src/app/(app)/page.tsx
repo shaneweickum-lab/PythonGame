@@ -3,13 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { ProgressBar } from "@/components/ProgressBar";
-import type { Concept, Phase, Project } from "@/lib/supabase/types";
+import type { Challenge, Concept, Phase, Project } from "@/lib/supabase/types";
 
 type UnfinishedItem = {
-  kind: "concept" | "project";
+  kind: "concept" | "project" | "challenge";
   id: string;
   title: string;
-  phaseId: string;
+  href: string;
   phaseTitle: string;
   phaseOrder: number;
 };
@@ -31,25 +31,33 @@ export default async function DashboardPage() {
 
   const supabase = await createClient();
 
-  const [{ data: phases }, { data: concepts }, { data: projects }, { count: dueCount }] =
-    await Promise.all([
-      supabase.from("phases").select("*").order("order_index"),
-      supabase.from("concepts").select("*"),
-      supabase.from("projects").select("*"),
-      supabase
-        .from("flashcards")
-        .select("*", { count: "exact", head: true })
-        .lte("next_review_at", new Date().toISOString()),
-    ]);
+  const [
+    { data: phases },
+    { data: concepts },
+    { data: projects },
+    { data: challenges },
+    { count: dueCount },
+  ] = await Promise.all([
+    supabase.from("phases").select("*").order("order_index"),
+    supabase.from("concepts").select("*"),
+    supabase.from("projects").select("*"),
+    supabase.from("challenges").select("*"),
+    supabase
+      .from("flashcards")
+      .select("*", { count: "exact", head: true })
+      .lte("next_review_at", new Date().toISOString()),
+  ]);
 
   const typedPhases = (phases ?? []) as Phase[];
   const typedConcepts = (concepts ?? []) as Concept[];
   const typedProjects = (projects ?? []) as Project[];
+  const typedChallenges = (challenges ?? []) as Challenge[];
 
-  const totalItems = typedConcepts.length + typedProjects.length;
+  const totalItems = typedConcepts.length + typedProjects.length + typedChallenges.length;
   const doneItems =
     typedConcepts.filter((c) => c.status === "done").length +
-    typedProjects.filter((p) => p.status === "done").length;
+    typedProjects.filter((p) => p.status === "done").length +
+    typedChallenges.filter((c) => c.status === "done").length;
 
   const phaseById = new Map(typedPhases.map((p) => [p.id, p]));
 
@@ -58,7 +66,7 @@ export default async function DashboardPage() {
       kind: "concept" as const,
       id: c.id,
       title: c.title,
-      phaseId: c.phase_id,
+      href: `/roadmap/${c.phase_id}`,
       phaseTitle: phaseById.get(c.phase_id)?.title ?? "",
       phaseOrder: phaseById.get(c.phase_id)?.order_index ?? Infinity,
       status: c.status,
@@ -69,12 +77,23 @@ export default async function DashboardPage() {
       kind: "project" as const,
       id: p.id,
       title: p.title,
-      phaseId: p.phase_id,
+      href: `/roadmap/${p.phase_id}`,
       phaseTitle: phaseById.get(p.phase_id)?.title ?? "",
       phaseOrder: phaseById.get(p.phase_id)?.order_index ?? Infinity,
       status: p.status,
       titleSort: p.title,
       typeSort: 1,
+    })),
+    ...typedChallenges.map((ch) => ({
+      kind: "challenge" as const,
+      id: ch.id,
+      title: ch.title,
+      href: `/challenges/${ch.id}`,
+      phaseTitle: (ch.phase_id ? phaseById.get(ch.phase_id)?.title : undefined) ?? "",
+      phaseOrder: (ch.phase_id ? phaseById.get(ch.phase_id)?.order_index : undefined) ?? Infinity,
+      status: ch.status,
+      titleSort: ch.title,
+      typeSort: 2,
     })),
   ]
     .filter((item) => item.status !== "done")
@@ -110,17 +129,21 @@ export default async function DashboardPage() {
           {nextItem ? (
             <div className="mt-3">
               <div className="text-sm text-slate-500">
-                Phase {nextItem.phaseOrder} · {nextItem.phaseTitle} ·{" "}
-                {nextItem.kind === "concept" ? "Concept" : "Project"}
+                {nextItem.phaseTitle && `Phase ${nextItem.phaseOrder} · ${nextItem.phaseTitle} · `}
+                {nextItem.kind === "concept"
+                  ? "Concept"
+                  : nextItem.kind === "project"
+                    ? "Project"
+                    : "Challenge"}
               </div>
               <div className="mt-1 text-lg font-medium text-slate-100">
                 {nextItem.title}
               </div>
               <Link
-                href={`/roadmap/${nextItem.phaseId}`}
+                href={nextItem.href}
                 className="mt-3 inline-block text-sm font-medium text-emerald-400 hover:text-emerald-300"
               >
-                Go to phase →
+                {nextItem.kind === "challenge" ? "Go to challenge →" : "Go to phase →"}
               </Link>
             </div>
           ) : (
@@ -150,8 +173,9 @@ export default async function DashboardPage() {
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Quick links
         </h2>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
+            { href: "/challenges", label: "Challenges", desc: "Auto-graded coding exercises" },
             { href: "/playground", label: "Playground", desc: "Run Python in the browser" },
             { href: "/spine", label: "Spine Project", desc: "One project, every phase" },
             { href: "/journal", label: "Journal", desc: "All reflections in one place" },

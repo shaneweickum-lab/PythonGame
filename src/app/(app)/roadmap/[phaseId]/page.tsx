@@ -7,7 +7,13 @@ import { StatusToggle } from "@/components/StatusToggle";
 import { ProgressBar } from "@/components/ProgressBar";
 import { JournalEntryForm } from "@/components/JournalEntryForm";
 import { JournalEntryList } from "@/components/JournalEntryList";
-import type { Concept, Phase, Project } from "@/lib/supabase/types";
+import type { Challenge, Concept, Phase, Project } from "@/lib/supabase/types";
+
+const CHALLENGE_STATUS_LABEL: Record<Challenge["status"], string> = {
+  not_started: "Not started",
+  in_progress: "In progress",
+  done: "Solved",
+};
 
 export default async function PhaseDetailPage({
   params,
@@ -26,17 +32,23 @@ export default async function PhaseDetailPage({
   const { phaseId } = await params;
   const supabase = await createClient();
 
-  const [{ data: phase }, { data: concepts }, { data: projects }, { data: journalEntries }] =
-    await Promise.all([
-      supabase.from("phases").select("*").eq("id", phaseId).single(),
-      supabase.from("concepts").select("*").eq("phase_id", phaseId).order("title"),
-      supabase.from("projects").select("*").eq("phase_id", phaseId).order("project_type"),
-      supabase
-        .from("journal_entries")
-        .select("*")
-        .eq("phase_id", phaseId)
-        .order("created_at", { ascending: false }),
-    ]);
+  const [
+    { data: phase },
+    { data: concepts },
+    { data: projects },
+    { data: challenges },
+    { data: journalEntries },
+  ] = await Promise.all([
+    supabase.from("phases").select("*").eq("id", phaseId).single(),
+    supabase.from("concepts").select("*").eq("phase_id", phaseId).order("title"),
+    supabase.from("projects").select("*").eq("phase_id", phaseId).order("project_type"),
+    supabase.from("challenges").select("*").eq("phase_id", phaseId).order("order_index"),
+    supabase
+      .from("journal_entries")
+      .select("*")
+      .eq("phase_id", phaseId)
+      .order("created_at", { ascending: false }),
+  ]);
 
   if (!phase) {
     notFound();
@@ -45,7 +57,8 @@ export default async function PhaseDetailPage({
   const typedPhase = phase as Phase;
   const typedConcepts = (concepts ?? []) as Concept[];
   const typedProjects = (projects ?? []) as Project[];
-  const items = [...typedConcepts, ...typedProjects];
+  const typedChallenges = (challenges ?? []) as Challenge[];
+  const items = [...typedConcepts, ...typedProjects, ...typedChallenges];
   const done = items.filter((i) => i.status === "done").length;
 
   return (
@@ -123,6 +136,30 @@ export default async function PhaseDetailPage({
           ))}
           {typedProjects.length === 0 && (
             <li className="text-sm text-slate-500">No projects for this phase.</li>
+          )}
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Coding Challenges
+        </h2>
+        <ul className="space-y-2">
+          {typedChallenges.map((challenge) => (
+            <li key={challenge.id}>
+              <Link
+                href={`/challenges/${challenge.id}`}
+                className="flex items-center justify-between gap-3 rounded-md border border-slate-800 bg-slate-900 px-3 py-2 hover:border-slate-700 hover:bg-slate-800/60"
+              >
+                <span className="text-sm text-slate-200">{challenge.title}</span>
+                <span className="text-xs text-slate-500">
+                  {CHALLENGE_STATUS_LABEL[challenge.status]}
+                </span>
+              </Link>
+            </li>
+          ))}
+          {typedChallenges.length === 0 && (
+            <li className="text-sm text-slate-500">No challenges for this phase.</li>
           )}
         </ul>
       </section>
