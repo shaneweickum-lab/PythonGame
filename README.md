@@ -2,8 +2,8 @@
 
 A personal learning dashboard for tracking progress through a structured,
 zero-to-expert Python roadmap: a phase-by-phase roadmap with concepts and
-projects, an in-browser Python playground, a spine-project log, spaced
-repetition flashcards, and a journal.
+projects, auto-graded coding challenges, an in-browser Python playground,
+a spine-project log, spaced repetition flashcards, and a journal.
 
 ## Stack
 
@@ -33,11 +33,15 @@ schema and seed data from the SQL editor (or the Supabase CLI):
 ```bash
 # schema
 supabase/migrations/0001_init_schema.sql
-# roadmap seed data (Phases 1-9)
+supabase/migrations/0002_add_challenges.sql
+# seed data (Phases 1-9, then their coding challenges)
 supabase/seed.sql
+supabase/seed_challenges.sql
 ```
 
-Both files have been validated against a local Postgres instance.
+All four files have been validated against a local Postgres instance, and
+every challenge's reference solution was run end-to-end through Pyodide to
+confirm its tests actually pass.
 
 ### 3. Configure environment variables
 
@@ -70,6 +74,9 @@ other page requires a live database.
 - `/` -- dashboard: overall progress, next unfinished item, due flashcards
 - `/roadmap`, `/roadmap/[phaseId]` -- phase list and detail, with status
   toggles that persist immediately
+- `/challenges`, `/challenges/[challengeId]` -- auto-graded coding
+  exercises per phase; write a solution, hit Run Tests, and it's marked
+  solved automatically when every case passes
 - `/playground` -- Pyodide-powered Python editor and console
 - `/spine` -- read-only log of the spine project's evolution across phases
 - `/review` -- SM-2-style spaced repetition flashcard review
@@ -83,3 +90,8 @@ other page requires a live database.
   import rather than letting the bundler process the `pyodide` npm
   package -- its internal Node-detection code contains a dynamic
   `require`/`import` that Turbopack/webpack can't statically analyze.
+- Challenges are graded by running the learner's code followed by that
+  challenge's `test_code` in the same Pyodide session. The convention is
+  one `PASS:`/`FAIL:` line per case and a final `<passed>/<total> tests
+  passed` summary line, which `ChallengeRunner` parses to auto-update
+  status -- no separate "submit" step.

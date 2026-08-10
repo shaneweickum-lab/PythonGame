@@ -1,5 +1,6 @@
 export type ConceptStatus = "not_started" | "in_progress" | "done";
 export type ProjectType = "mini" | "spine";
+export type ChallengeDifficulty = "easy" | "medium" | "hard";
 
 export type Phase = {
   id: string;
@@ -46,6 +47,20 @@ export type JournalEntry = {
   created_at: string;
 };
 
+export type Challenge = {
+  id: string;
+  phase_id: string | null;
+  order_index: number;
+  title: string;
+  difficulty: ChallengeDifficulty;
+  prompt: string;
+  hint: string | null;
+  starter_code: string;
+  test_code: string;
+  status: ConceptStatus;
+  code_snapshot: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -78,6 +93,13 @@ export type Database = {
         Row: JournalEntry;
         Insert: Partial<JournalEntry> & Pick<JournalEntry, "content">;
         Update: Partial<JournalEntry>;
+        Relationships: [];
+      };
+      challenges: {
+        Row: Challenge;
+        Insert: Partial<Challenge> &
+          Pick<Challenge, "title" | "prompt" | "starter_code" | "test_code">;
+        Update: Partial<Challenge>;
         Relationships: [];
       };
     };

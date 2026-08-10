@@ -27,7 +27,7 @@ export function StatusToggle({
   id,
   status,
 }: {
-  table: "concepts" | "projects";
+  table: "concepts" | "projects" | "challenges";
   id: string;
   status: ConceptStatus;
 }) {
