@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { ProgressBar } from "@/components/ProgressBar";
 import type { Phase, Project } from "@/lib/supabase/types";
 
@@ -15,6 +17,20 @@ const STATUS_STYLE: Record<Project["status"], string> = {
 };
 
 export default async function SpinePage() {
+  if (!isSupabaseConfigured()) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-100">Spine Project</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            One growing project, tracked across every phase of the roadmap.
+          </p>
+        </div>
+        <NotConfiguredNotice />
+      </div>
+    );
+  }
+
   const supabase = await createClient();
 
   const [{ data: phases }, { data: spineProjects }] = await Promise.all([

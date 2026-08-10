@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { NavLinks } from "@/components/NavLinks";
 
 export default async function AppLayout({
@@ -6,9 +7,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabaseConfigured = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  );
+  const supabaseConfigured = isSupabaseConfigured();
   const userEmail = supabaseConfigured
     ? (await (await createClient()).auth.getUser()).data.user?.email
     : undefined;

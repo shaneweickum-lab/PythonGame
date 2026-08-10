@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getPyodide } from "@/lib/pyodide";
 import type { PyodideAPI } from "pyodide";
 
@@ -43,7 +44,7 @@ export function PlaygroundClient() {
   }, []);
 
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
+    if (!isSupabaseConfigured()) return;
     const supabase = createClient();
     supabase
       .from("projects")

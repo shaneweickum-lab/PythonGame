@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { ProgressBar } from "@/components/ProgressBar";
 import type { Concept, Phase, Project } from "@/lib/supabase/types";
 
@@ -13,6 +15,20 @@ type UnfinishedItem = {
 };
 
 export default async function DashboardPage() {
+  if (!isSupabaseConfigured()) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-100">Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Your progress through the Python zero-to-expert roadmap.
+          </p>
+        </div>
+        <NotConfiguredNotice />
+      </div>
+    );
+  }
+
   const supabase = await createClient();
 
   const [{ data: phases }, { data: concepts }, { data: projects }, { count: dueCount }] =

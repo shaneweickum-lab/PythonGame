@@ -18,6 +18,7 @@ export function ReviewSession({ initialCards }: { initialCards: Flashcard[] }) {
   const [revealed, setRevealed] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
   const [grading, setGrading] = useState(false);
+  const [gradeError, setGradeError] = useState<string | null>(null);
 
   const current = queue[0];
   const totalStarted = initialCards.length;
@@ -25,11 +26,12 @@ export function ReviewSession({ initialCards }: { initialCards: Flashcard[] }) {
   async function submitGrade(chosenGrade: ReviewGrade) {
     if (!current || grading) return;
     setGrading(true);
+    setGradeError(null);
 
     const update = scheduleNextReview(current, chosenGrade, new Date());
 
     const supabase = createClient();
-    await supabase
+    const { error } = await supabase
       .from("flashcards")
       .update({
         ease_factor: update.ease_factor,
@@ -39,10 +41,16 @@ export function ReviewSession({ initialCards }: { initialCards: Flashcard[] }) {
       })
       .eq("id", current.id);
 
+    setGrading(false);
+
+    if (error) {
+      setGradeError("Failed to save this grade -- try again.");
+      return;
+    }
+
     setQueue((q) => q.slice(1));
     setReviewedCount((c) => c + 1);
     setRevealed(false);
-    setGrading(false);
   }
 
   if (totalStarted === 0) {
@@ -107,18 +115,21 @@ export function ReviewSession({ initialCards }: { initialCards: Flashcard[] }) {
           Show answer
         </button>
       ) : (
-        <div className="flex flex-wrap gap-2">
-          {GRADE_BUTTONS.map((b) => (
-            <button
-              key={b.grade}
-              type="button"
-              disabled={grading}
-              onClick={() => submitGrade(b.grade)}
-              className={`rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${b.style}`}
-            >
-              {b.label}
-            </button>
-          ))}
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {GRADE_BUTTONS.map((b) => (
+              <button
+                key={b.grade}
+                type="button"
+                disabled={grading}
+                onClick={() => submitGrade(b.grade)}
+                className={`rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${b.style}`}
+              >
+                {b.label}
+              </button>
+            ))}
+          </div>
+          {gradeError && <p className="text-xs text-red-400">{gradeError}</p>}
         </div>
       )}
     </div>
