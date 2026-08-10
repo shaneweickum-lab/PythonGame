@@ -1,26 +1,18 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/*
+ * This app has a single fixed dark theme (see the bg-slate-950/text-slate-100
+ * classes on <body> in layout.tsx) rather than following the OS light/dark
+ * preference, so there's no --background/--foreground variable pair here.
+ * An earlier unlayered `body { background: #fff; ... }` rule used to beat
+ * Tailwind's utility classes -- unlayered CSS always wins over layered
+ * (Tailwind) CSS regardless of selector specificity.
+ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+:root {
+  color-scheme: dark;
 }
