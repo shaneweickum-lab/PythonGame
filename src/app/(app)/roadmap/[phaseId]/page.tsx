@@ -40,7 +40,7 @@ export default async function PhaseDetailPage({
     { data: journalEntries },
   ] = await Promise.all([
     supabase.from("phases").select("*").eq("id", phaseId).single(),
-    supabase.from("concepts").select("*").eq("phase_id", phaseId).order("title"),
+    supabase.from("concepts").select("*").eq("phase_id", phaseId).order("order_index"),
     supabase.from("projects").select("*").eq("phase_id", phaseId).order("project_type"),
     supabase.from("challenges").select("*").eq("phase_id", phaseId).order("order_index"),
     supabase
@@ -60,6 +60,11 @@ export default async function PhaseDetailPage({
   const typedChallenges = (challenges ?? []) as Challenge[];
   const items = [...typedConcepts, ...typedProjects, ...typedChallenges];
   const done = items.filter((i) => i.status === "done").length;
+
+  const microByConcept = new Map(
+    typedProjects.filter((p) => p.project_type === "micro").map((p) => [p.concept_id, p]),
+  );
+  const integrativeProjects = typedProjects.filter((p) => p.project_type !== "micro");
 
   return (
     <div className="space-y-8">
@@ -84,18 +89,36 @@ export default async function PhaseDetailPage({
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-          Concepts
+          Concepts &amp; Micro-Projects
         </h2>
-        <ul className="space-y-1.5">
-          {typedConcepts.map((c) => (
-            <li
-              key={c.id}
-              className="flex items-center justify-between gap-3 rounded-md border border-slate-800 bg-slate-900 px-3 py-2"
-            >
-              <span className="text-sm text-slate-200">{c.title}</span>
-              <StatusToggle table="concepts" id={c.id} status={c.status} />
-            </li>
-          ))}
+        <ul className="space-y-2">
+          {typedConcepts.map((c) => {
+            const micro = microByConcept.get(c.id);
+            return (
+              <li
+                key={c.id}
+                className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-slate-200">{c.title}</span>
+                  <StatusToggle table="concepts" id={c.id} status={c.status} />
+                </div>
+                {micro && (
+                  <div className="mt-2 flex items-center justify-between gap-3 rounded-md border border-slate-800 bg-slate-950/60 px-3 py-2">
+                    <div>
+                      <span className="text-xs font-medium text-slate-300">
+                        🔧 {micro.title}
+                      </span>
+                      {micro.description && (
+                        <p className="mt-0.5 text-xs text-slate-500">{micro.description}</p>
+                      )}
+                    </div>
+                    <StatusToggle table="projects" id={micro.id} status={micro.status} />
+                  </div>
+                )}
+              </li>
+            );
+          })}
           {typedConcepts.length === 0 && (
             <li className="text-sm text-slate-500">No concepts for this phase.</li>
           )}
@@ -107,7 +130,7 @@ export default async function PhaseDetailPage({
           Mini-Project & Spine Milestone
         </h2>
         <ul className="space-y-2">
-          {typedProjects.map((p) => (
+          {integrativeProjects.map((p) => (
             <li
               key={p.id}
               className="rounded-md border border-slate-800 bg-slate-900 px-3 py-3"
@@ -134,7 +157,7 @@ export default async function PhaseDetailPage({
               )}
             </li>
           ))}
-          {typedProjects.length === 0 && (
+          {integrativeProjects.length === 0 && (
             <li className="text-sm text-slate-500">No projects for this phase.</li>
           )}
         </ul>

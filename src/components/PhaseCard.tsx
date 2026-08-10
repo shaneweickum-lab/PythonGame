@@ -19,6 +19,11 @@ export function PhaseCard({
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
+  const microByConcept = new Map(
+    projects.filter((p) => p.project_type === "micro").map((p) => [p.concept_id, p]),
+  );
+  const integrativeProjects = projects.filter((p) => p.project_type !== "micro");
+
   const items = [...concepts, ...projects];
   const done = items.filter((i) => i.status === "done").length;
   const total = items.length;
@@ -53,18 +58,35 @@ export function PhaseCard({
         <div className="border-t border-slate-800 px-4 py-4 space-y-5">
           <div>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Concepts
+              Concepts &amp; Micro-Projects
             </h3>
-            <ul className="space-y-1.5">
-              {concepts.map((c) => (
-                <li
-                  key={c.id}
-                  className="flex items-center justify-between gap-3 rounded-md px-2 py-1 hover:bg-slate-800/50"
-                >
-                  <span className="text-sm text-slate-200">{c.title}</span>
-                  <StatusToggle table="concepts" id={c.id} status={c.status} />
-                </li>
-              ))}
+            <ul className="space-y-2">
+              {concepts.map((c) => {
+                const micro = microByConcept.get(c.id);
+                return (
+                  <li key={c.id} className="rounded-md px-2 py-1.5 hover:bg-slate-800/50">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-slate-200">{c.title}</span>
+                      <StatusToggle table="concepts" id={c.id} status={c.status} />
+                    </div>
+                    {micro && (
+                      <div className="mt-1.5 flex items-center justify-between gap-3 rounded-md border border-slate-800 bg-slate-950/60 px-2 py-1">
+                        <div className="min-w-0">
+                          <span className="text-xs font-medium text-slate-300">
+                            🔧 {micro.title}
+                          </span>
+                          {micro.description && (
+                            <p className="mt-0.5 truncate text-xs text-slate-500">
+                              {micro.description}
+                            </p>
+                          )}
+                        </div>
+                        <StatusToggle table="projects" id={micro.id} status={micro.status} />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
               {concepts.length === 0 && (
                 <li className="text-sm text-slate-500">No concepts yet.</li>
               )}
@@ -73,10 +95,10 @@ export function PhaseCard({
 
           <div>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Projects
+              Mini-Project & Spine Milestone
             </h3>
             <ul className="space-y-1.5">
-              {projects.map((p) => (
+              {integrativeProjects.map((p) => (
                 <li
                   key={p.id}
                   className="flex items-center justify-between gap-3 rounded-md px-2 py-1 hover:bg-slate-800/50"
@@ -90,7 +112,7 @@ export function PhaseCard({
                   <StatusToggle table="projects" id={p.id} status={p.status} />
                 </li>
               ))}
-              {projects.length === 0 && (
+              {integrativeProjects.length === 0 && (
                 <li className="text-sm text-slate-500">No projects yet.</li>
               )}
             </ul>
