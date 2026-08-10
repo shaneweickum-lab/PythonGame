@@ -11,6 +11,7 @@ export const NAV_LINKS = [
   { href: "/spine", label: "Spine", icon: "🌳" },
   { href: "/review", label: "Review", icon: "🔁" },
   { href: "/journal", label: "Journal", icon: "📓" },
+  { href: "/achievements", label: "Achievements", icon: "🏆" },
 ];
 
 export function isNavLinkActive(pathname: string, href: string) {

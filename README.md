@@ -39,6 +39,7 @@ supabase/migrations/0001_init_schema.sql
 supabase/migrations/0002_add_challenges.sql
 supabase/migrations/0003_project_concept_link.sql
 supabase/migrations/0004_lessons_and_concept_challenges.sql
+supabase/migrations/0005_gamification.sql
 # seed data, in order
 supabase/seed.sql                              # phases, original 9 mini/spine projects, flashcards
 supabase/seed_challenges.sql                    # 18 phase-level auto-graded challenges
@@ -89,7 +90,10 @@ other page requires a live database.
 
 ## Project structure
 
-- `/` -- dashboard: overall progress, next unfinished item, due flashcards
+- `/` -- dashboard: level/XP, streak, overall progress, next unfinished
+  item, due flashcards
+- `/achievements` -- your level and XP breakdown, current/longest streak,
+  and the full badge trophy case
 - `/roadmap`, `/roadmap/[phaseId]` -- phase list and detail; every concept
   shows its own status toggle plus, when one exists, its linked
   micro-project nested right underneath, followed by that phase's
@@ -148,3 +152,13 @@ other page requires a live database.
   as static assets). On screens below Tailwind's `md` breakpoint, the
   top nav (`NavLinks`) hides and a fixed bottom tab bar (`MobileTabBar`)
   takes over, matching a native mobile app's navigation pattern.
+- Gamification (`src/lib/gamification.ts`) is computed live from current
+  `status`/`completed_at` on concepts/projects/challenges plus journal
+  entry timestamps -- there's no separate XP ledger or "badge unlocked"
+  table. XP reflects how much of the curriculum is *currently* marked
+  done (unmarking something removes its XP rather than double-counting
+  effort), and badges are just boolean checks against that same data
+  recomputed on every page load. `completed_at` (added in migration 0005)
+  exists only so streaks know which calendar days had activity --
+  `StatusToggle`/`ChallengeRunner` set it alongside `status` whenever
+  something is marked done, and clear it if unmarked.
