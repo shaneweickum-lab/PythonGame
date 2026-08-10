@@ -23,6 +23,17 @@ Reassigning a variable doesn't change the type of anything else that
 happened to point to the old value -- names and values are separate
 things.
 
+## Why it matters
+
+Dynamic typing is why you can write `total = 0` and later `total += price` without ever declaring a type, but it's also why a bug -- like a function expecting a number silently getting a string -- can slip through unnoticed until it actually runs. This flexibility is exactly why Python code, config values, and JSON/API data can flow between variables without type declarations getting in the way.
+
+## Common mistakes
+
+- Assuming Python "remembers" the old type after reassignment -- `score = "ten"` genuinely changes what's stored in `score`; there's no lingering int underneath.
+- Confusing `=` (assignment) with `==` (comparison) -- `if score = 10:` is a syntax error, and beginners often reach for `=` when they meant to check equality.
+- Assuming two variables that happen to hold the same value stay linked, e.g. `x = 5; y = x; x = 6` -- `y` is still `5`; reassigning `x` never changes `y` for immutable types like `int`/`str`.
+- Naming a variable the same as a built-in (`list = [1, 2, 3]`, `str = "hi"`) -- it runs, but shadows the built-in for the rest of that scope and causes confusing errors later when you try to call `list()` or `str()`.
+
 ## Key points
 
 - Variable names are just labels; the *value* has a type, not the name.
@@ -44,6 +55,17 @@ By default `print()` joins its arguments with a space and ends with a
 newline. Both of those are configurable with the `sep` and `end`
 keyword arguments if you ever need something different.
 
+## Why it matters
+
+print() is the main way beginners get feedback on what their code is actually doing -- checking a variable's value, tracing which branch ran -- before they know how to use a real debugger. Comments matter because reading code later (yours in six months, or a teammate's) is harder than writing it, and a good comment saves someone from re-deriving your intent from scratch.
+
+## Common mistakes
+
+- Trying to comment out several lines with one `#` -- it only comments to the end of that line; each line needs its own `#`.
+- Concatenating mixed types with `+` in a `print()` call, e.g. `print("Age: " + 25)` -- raises `TypeError` because `+` won't silently convert an int to a str; use a comma or an f-string instead.
+- Writing comments that just restate the code (`x = x + 1  # add one to x`) instead of explaining why -- that's noise, not documentation.
+- Forgetting that `print()` returns `None` -- writing `x = print("hi")` and then trying to use `x` as if it held the printed text.
+
 ## Key points
 
 - Comments start with `#` and run to the end of the line.
@@ -63,6 +85,17 @@ print(2 ** 5)  # 32    -- exponentiation
 
 Operator precedence works like normal math (`**` before `* /` before
 `+ -`), and parentheses override it exactly like you'd expect.
+
+## Why it matters
+
+Nearly every calculation in real code -- totals, averages, pagination math, splitting a bill -- depends on knowing whether an operation hands back an int or a float, and whether you want the full quotient or just the remainder. Picking the wrong operator here is a common source of quietly-wrong totals rather than a crash.
+
+## Common mistakes
+
+- Expecting `/` to give an int when both operands are ints -- `4 / 2` is `2.0`, not `2`; use `//` when you specifically want floor division.
+- Treating `%` as "percent of" -- it's the remainder of division, so `10 % 3` is `1`, not a percentage.
+- Reaching for `^` to mean "power" out of habit from math notation -- in Python `^` is bitwise XOR; `**` is exponentiation.
+- Assuming float math is exact and comparing with `==` -- `0.1 + 0.2 == 0.3` is `False` because of binary floating-point representation.
 
 ## Key points
 
@@ -85,6 +118,17 @@ print(s + "ic")  # concatenation: 'Pythonic'
 
 Strings are immutable -- slicing and concatenation always build a *new*
 string rather than changing the original.
+
+## Why it matters
+
+Indexing and slicing show up constantly -- pulling a file extension off a filename, grabbing the first few characters of user input, reversing text -- and it's the same syntax you'll reuse later for lists and other sequences, so getting comfortable here pays off everywhere.
+
+## Common mistakes
+
+- Trying to change a character in place, `s[0] = "J"` -- strings are immutable, so this raises `TypeError`; build a new string with slicing/concatenation instead.
+- Off-by-one confusion with slice bounds -- forgetting that `s[1:4]` excludes index 4, or expecting `s[len(s)]` to work (it's out of range, though `s[len(s):]` is legal and just empty).
+- Slicing past the string's length and being surprised it doesn't error -- `s[100:200]` on a short string silently returns `''` instead of raising, which can hide bugs.
+- Forgetting the space when concatenating, e.g. `"Hello" + name` instead of `"Hello " + name`, producing `"HelloAda"`.
 
 ## Key points
 
@@ -109,6 +153,17 @@ print("-".join(["a", "b"]))   # 'a-b'
 Every one of these returns a *new* string -- strings are immutable, so
 none of them modify `s` in place.
 
+## Why it matters
+
+Cleaning and reshaping text -- trimming whitespace from user input, splitting a CSV line, normalizing case before comparing -- is one of the most common things real scripts do before any "real" logic runs, so these methods get used on nearly every line that touches text.
+
+## Common mistakes
+
+- Calling `s.strip()` (or `.replace()`, `.upper()`, etc.) and expecting it to modify `s` -- it doesn't; strings are immutable, so you must reassign: `s = s.strip()`.
+- Assuming `.strip()` removes spaces from the middle of a string -- it only trims from the two ends, not internal whitespace.
+- Using `.split(" ")` and expecting it to behave like plain `.split()` -- `"a  b".split(" ")` (two spaces) produces `['a', '', 'b']`, while `.split()` with no argument collapses any run of whitespace instead.
+- Calling `.join()` on the wrong object -- it's a string method that takes the list, e.g. `"-".join(["a", "b"])`, not `["a", "b"].join("-")`.
+
 ## Key points
 
 - `.strip()` trims whitespace (or specified characters) from both ends.
@@ -127,6 +182,17 @@ print(f"{name} is {age} years old")
 print(f"Next year: {age + 1}")
 print(f"Pi is about {3.14159:.2f}")   # format spec: 2 decimal places
 ```
+
+## Why it matters
+
+f-strings are how most modern Python code builds any string that includes a variable -- log messages, error text, generated filenames -- and they're what you'll see throughout real codebases instead of older `%`-formatting or `.format()` calls.
+
+## Common mistakes
+
+- Putting quotes around a name inside the braces, like `f"{'name'}"` -- that prints the literal text `name`, because it's now a string literal inside the expression, not a reference to the variable.
+- Reusing the same quote character inside and outside the f-string on older Python versions (pre-3.12), e.g. `f"{d["key"]}"` -- can cause a syntax error; nest single quotes inside double quotes (or vice versa) to be safe.
+- Assuming a format spec like `{value:.2f}` changes the underlying value's precision -- it only affects how the value is displayed, not what's stored in the variable.
+- Cramming complex logic or method calls inside `{}` because it's technically legal -- it makes the string hard to read; pull the expression out into its own variable first.
 
 ## Key points
 
@@ -160,6 +226,17 @@ print(age < 18 or has_ticket)     # True (has_ticket alone decides it)
 print(not has_ticket)             # False
 ```
 
+## Why it matters
+
+Every `if` statement, loop condition, and filter in real code ultimately boils down to a boolean expression, so misjudging how `and`/`or` short-circuit or what counts as "truthy" leads to logic bugs that don't crash -- they just quietly do the wrong thing.
+
+## Common mistakes
+
+- Writing `if x == True:` instead of just `if x:` -- redundant, and it breaks for values that are truthy but not literally `True`; similarly `if x == None` should be `if x is None`.
+- Chaining conditions without parentheses where the intent needed them, e.g. `a or b and c` -- `and` binds tighter than `or`, so it doesn't evaluate strictly left to right the way plain English suggests.
+- Assuming `and`/`or` always return `True`/`False` -- they return one of the actual operand values, so `0 or "backup"` evaluates to `"backup"`, not `True`.
+- Confusing `is` with `==` -- `is` checks whether two names point to the same object, `==` checks value equality; using `is` on numbers or strings can appear to work by accident and then fail elsewhere.
+
 ## Key points
 
 - `and`/`or` return one of their actual operands, not just True/False --
@@ -184,6 +261,17 @@ Because this app runs Python inside a browser (no real terminal),
 but the concept and the functions below work identically once you're
 running scripts locally.
 
+## Why it matters
+
+Any script that needs to ask a person for information -- a name, a quantity, a menu choice -- goes through `input()`, and forgetting that it always hands back a string is one of the very first stumbling blocks when that value needs to be used as a number.
+
+## Common mistakes
+
+- Forgetting `input()` always returns a `str` and trying to do math directly, e.g. `input("Age: ") + 1` -- raises `TypeError`; wrap it in `int()` or `float()` first.
+- Wrapping the conversion around unchecked input, e.g. `int(input("Age: "))` when someone types "twenty" -- raises `ValueError`; nothing here guarantees the text is numeric.
+- Skipping the prompt argument, just calling `input()` -- the program pauses with no visible cue about what it's waiting for.
+- Expecting `input()` to trim whitespace or normalize case automatically -- it returns exactly what was typed, so `if answer == "yes"` can silently fail against `"yes "` or `"Yes"`.
+
 ## Key points
 
 - `input()` always returns a `str` -- convert it explicitly when you need a number.
@@ -207,6 +295,17 @@ else:
     grade = "F"
 print(grade)   # 'B'
 ```
+
+## Why it matters
+
+if/elif/else is the backbone of decision-making code -- validating a form field, branching game logic, choosing which response to return -- and most "wrong branch ran" bugs trace back to condition order or a missing case here.
+
+## Common mistakes
+
+- Writing several separate `if` statements when `elif` was intended -- with independent `if`s, more than one block can run even though only one was supposed to.
+- Putting a broad condition before a more specific one it already covers, e.g. checking `score >= 70` before `score >= 90` -- the first true branch wins, so the more specific one below it never gets reached.
+- Forgetting the colon `:` at the end of the `if`/`elif`/`else` line, or misindenting the block underneath -- both are common early syntax/indentation errors.
+- Writing `if condition == True:` instead of using the condition directly.
 
 ## Key points
 
@@ -234,6 +333,17 @@ Watch out for infinite loops: if the condition never becomes false, the
 loop never stops. `break` exits a loop immediately; `continue` skips to
 the next iteration's condition check.
 
+## Why it matters
+
+while loops are the tool for "keep going until something changes" -- polling for a status, retrying a connection, processing input until a sentinel value shows up -- situations where you genuinely don't know the iteration count ahead of time, unlike looping over a fixed collection.
+
+## Common mistakes
+
+- Forgetting to update the variable the condition depends on inside the loop body, creating an infinite loop -- e.g. `while n > 0: print(n)` with no `n -= 1`.
+- Updating the condition variable in a way that never actually reaches the stopping value (a logic bug in the update step), so the loop runs far longer than intended or forever.
+- Using `while` to count a known number of iterations when a `for` loop over `range()` would be simpler and less error-prone -- `while` makes you manage the counter by hand, which is one more place to introduce a bug.
+- Confusing `break` (exits the loop entirely) with `continue` (skips to the next condition check) -- using one where the other was intended.
+
 ## Key points
 
 - The condition is checked *before* each iteration, including the first.
@@ -259,6 +369,17 @@ for i in range(2, 10, 2):
 `range(stop)`, `range(start, stop)`, and `range(start, stop, step)` are
 all valid -- `stop` is always excluded, just like slicing.
 
+## Why it matters
+
+for loops over `range()`, strings, and lists are how most repetitive work gets done in Python -- processing every row in a dataset, generating a fixed number of items -- and `range()`'s exclusive stop mirrors the same convention used in slicing, reinforcing a pattern that shows up everywhere else too.
+
+## Common mistakes
+
+- Expecting `range(5)` to include 5 -- it produces `0, 1, 2, 3, 4`; the stop value is always excluded, same as in slicing.
+- Writing `for i in range(len(items)): print(items[i])` when `for item in items:` (or `enumerate(items)` if you truly need the index) is simpler and less error-prone.
+- Modifying a list while iterating directly over it, e.g. removing items inside `for item in my_list:` -- this skips elements or raises errors because the iteration position shifts underneath you.
+- Assuming `range()` produces a list -- printing `range(5)` directly shows `range(0, 5)`, not `[0, 1, 2, 3, 4]`; it's a lazy sequence that behaves like a list when iterated or sliced.
+
 ## Key points
 
 - `for x in sequence` gives you each *item*, not an index -- use
@@ -281,6 +402,17 @@ print(celsius_to_fahrenheit(100))   # 212.0
 print(greet("Ada"))                  # 'Hello, Ada!'
 print(greet("Bo", "Hey"))           # 'Hey, Bo!'
 ```
+
+## Why it matters
+
+Functions are how real programs get broken into reusable, testable pieces -- a `calculate_total()` called in ten places instead of copy-pasted math -- and getting parameters and return values right is the difference between a function that composes cleanly with the rest of your code and one that quietly hands back `None`.
+
+## Common mistakes
+
+- Forgetting `return` and assuming `print()`ing inside a function is the same as returning a value -- the caller gets `None` back and can't use the printed value in further computation.
+- Putting a default parameter before a required one, e.g. `def f(a="x", b):` -- this is a `SyntaxError`; defaults must come after all parameters that don't have one.
+- Calling the function without parentheses when a call was intended, `result = greet` instead of `greet()` -- `result` ends up holding the function object itself, not its return value.
+- Using a mutable default argument like `def f(items=[]):` -- the same list object is reused across every call that doesn't pass its own, so items appended in one call leak into the next.
 
 ## Key points
 
@@ -316,6 +448,17 @@ increment_global()
 print(counter)   # 1
 ```
 
+## Why it matters
+
+Scope rules explain a very common "why isn't my variable updating" bug -- code that assigns inside a function and expects the outer variable to change -- and getting comfortable with local vs. global is essential before writing any program with more than one function.
+
+## Common mistakes
+
+- Assigning to a variable inside a function and expecting it to update the same-named variable outside -- without `global`, the assignment creates a brand-new local variable that shadows the outer one for the rest of that call.
+- Reading a variable and then also assigning to it later in the same function, without declaring `global` first -- Python treats a name as local for the *entire* function body if it's assigned anywhere in it, so the earlier read raises `UnboundLocalError` instead of seeing the outer value.
+- Reaching for `global` to "fix" these issues instead of passing values in as parameters and returning results -- it makes the function's behavior depend on hidden outside state, which gets hard to track as a program grows.
+- Assuming a function's local variables persist between calls -- every call starts with a completely fresh set of locals; nothing carries over unless it's explicitly returned and stored somewhere.
+
 ## Key points
 
 - Reading an outer (global) variable from inside a function works
@@ -343,6 +486,17 @@ print(safe_divide(10, 0))   # None -- handled, not a crash
 You can catch multiple exception types, add an `else` (runs if no
 exception occurred) and a `finally` (always runs, error or not).
 
+## Why it matters
+
+Real programs deal with unreliable input and external failures constantly -- a file that doesn't exist, a user typing letters where a number was expected, a network call timing out -- and try/except is how you keep a program running (or fail on purpose and gracefully) instead of crashing on the first bad input.
+
+## Common mistakes
+
+- Using a bare `except:` to catch "anything" -- it also silently swallows real bugs (like a typo causing `NameError`) along with the error you meant to handle, making problems far harder to find.
+- Wrapping far more code than necessary inside `try` -- it becomes unclear which line can actually raise, and unrelated errors can get caught by accident.
+- Catching an exception and doing nothing, `except Exception: pass` -- the program keeps running, but the underlying problem is now invisible and often causes confusing behavior further downstream.
+- Assuming try/except fixes the error rather than just handling it -- `except ZeroDivisionError: return None` doesn't make `10 / 0` valid, it just lets your code respond to that specific failure instead of crashing.
+
 ## Key points
 
 - Catch specific exception types (`ValueError`, `ZeroDivisionError`,
@@ -364,6 +518,17 @@ print(groceries)                  # ['milk', 'cheese', 'bread', 'butter']
 print(len(groceries))             # 4
 ```
 
+## Why it matters
+
+Lists are the default way to store any changing collection in Python -- game inventories, shopping carts, rows read from a file. Because they're mutable, you can build one up incrementally with `.append()` in a loop instead of knowing every value up front.
+
+## Common mistakes
+
+- Confusing index assignment with insertion: `groceries[5] = "x"` on a 3-item list raises `IndexError` rather than growing the list -- use `.append()` to add a new item.
+- Assuming `new_list = old_list` makes a copy -- it doesn't; both names point to the same list, so mutating one mutates the other. Use `old_list.copy()` or `list(old_list)` for an actual copy.
+- Forgetting indices start at 0, so `groceries[1]` is the second item, not the first.
+- Using a negative index beyond the list's length (e.g. `groceries[-10]` on a 3-item list) still raises `IndexError` -- negative indexing doesn't clip like slicing does.
+
 ## Key points
 
 - Lists can hold mixed types, though most real lists hold one kind of thing.
@@ -384,6 +549,17 @@ print(songs[::-1])   # ['E', 'D', 'C', 'B', 'A']
 Slicing never raises an error for out-of-range indexes -- it just clips
 to whatever's actually there, which is handy for "give me up to N items"
 logic.
+
+## Why it matters
+
+Slicing is how you grab "the first N", "the last N", or "everything but the header row" without writing a manual loop -- e.g. `rows[1:]` to skip a CSV header, or `data[-5:]` for the last five entries.
+
+## Common mistakes
+
+- Expecting `stop` to be inclusive -- `songs[1:3]` returns indices 1 and 2, not 3; the stop index is always excluded.
+- Thinking a slice is a view into the original list -- it's a new list, so `songs[:3][0] = "X"` never touches `songs`.
+- Mixing up a single index and a slice of length one -- `songs[0]` returns the item itself, while `songs[0:1]` returns a list containing that item; they're different types.
+- Assuming an out-of-range slice raises an error like out-of-range indexing does -- `songs[2:100]` just returns whatever's actually there, no exception.
 
 ## Key points
 
@@ -408,6 +584,17 @@ print(scores)              # [20, 30]
 instead of sorting in place -- reach for that when you need to keep the
 original order too.
 
+## Why it matters
+
+These methods are how real code builds, trims, and reorders lists in place -- queues, leaderboards, and undo stacks all lean on append/pop/sort rather than rebuilding a new list from scratch every time.
+
+## Common mistakes
+
+- Writing `scores = scores.sort()` and getting `None` -- `.sort()` mutates in place and returns `None`; use `sorted(scores)` when you need the result as a value.
+- Calling `.remove(value)` expecting it to remove by position -- it removes the first matching *value* and raises `ValueError` if that value isn't present; use `.pop(index)` to remove by position instead.
+- Popping from an empty list (`[].pop()`) raises `IndexError` -- check `len()` or truthiness first if the list might be empty.
+- Confusing `.append(x)` with `.extend(x)` -- `.append([1, 2])` adds one item that is itself a list, not two separate items.
+
 ## Key points
 
 - `.append(x)` adds one item; `.extend(iterable)` adds many.
@@ -429,6 +616,17 @@ print(x, y)              # 3 4
 A one-item tuple needs a trailing comma -- `(5,)`, not `(5)` (which is
 just the integer 5 in parentheses).
 
+## Why it matters
+
+Tuples show up constantly as return values from functions that hand back more than one thing (like `divmod()` or `.items()` pairs) and as dictionary keys when a single value isn't unique enough, such as an (x, y) coordinate.
+
+## Common mistakes
+
+- Writing `(5)` expecting a one-item tuple -- it's just the integer 5; the trailing comma, not the parentheses, is what makes it a tuple: `(5,)`.
+- Trying to mutate a tuple in place, e.g. `point[0] = 10`, and being surprised by `TypeError` -- tuples never support item assignment, even though reading/indexing works fine.
+- Forgetting that a tuple holding a mutable object (like `([1, 2], "x")`) still lets you mutate that inner list -- immutability locks the tuple's slots, not what's inside them.
+- Using a list where a dict key is needed and hitting `TypeError: unhashable type` -- swap the list for a tuple if the values won't change.
+
 ## Key points
 
 - Tuples support indexing and slicing just like lists, but never mutation.
@@ -447,6 +645,17 @@ print(contacts.get("Zed"))        # None, no KeyError
 print(contacts.get("Zed", "?"))   # '?' -- a default
 del contacts["Bo"]                 # remove an entry
 ```
+
+## Why it matters
+
+Dicts are the natural fit for anything keyed by name -- user profiles, config settings, JSON API responses -- anywhere you look something up by a label instead of a position.
+
+## Common mistakes
+
+- Using `d[key]` for a lookup that might not exist and crashing with `KeyError` -- use `.get(key)` or `.get(key, default)` when the key might be missing.
+- Assuming dict keys can be lists -- keys must be hashable, so `d[[1, 2]] = "x"` raises `TypeError: unhashable type`; use a tuple instead.
+- Forgetting that reading a missing key raises `KeyError`, even though assigning to a missing key just creates it -- `contacts["Cy"] = "..."` works fine, but `contacts["Cy"]` before that assignment does not.
+- Mixing up `del d[key]` (raises `KeyError` if missing) with `.pop(key, default)` (won't raise if you supply a default).
 
 ## Key points
 
@@ -468,6 +677,17 @@ print(sum(inventory.values()))              # 15
 print(list(inventory.keys()))               # ['apples', 'bananas']
 ```
 
+## Why it matters
+
+Looping over a dict's keys, values, or pairs is one of the most common patterns in real code -- tallying results, building lookup tables from raw data, merging config from multiple sources with `.update()`.
+
+## Common mistakes
+
+- Writing `for item, qty in inventory:` and forgetting `.items()` -- iterating a dict directly yields keys only, so unpacking into two variables raises a `ValueError`.
+- Mutating a dict's keys while iterating over it directly (like deleting an entry inside a `for item in inventory:` loop) -- this raises `RuntimeError`; iterate over `list(inventory)` if you need to change the dict mid-loop.
+- Treating `.keys()`/`.values()` as lists -- you can loop over them or check membership, but indexing them directly (`inventory.keys()[0]`) doesn't work; wrap in `list(...)` first if you need that.
+- Assuming `.update()` merges nested dicts recursively -- for a nested value it overwrites the whole thing at a matching key rather than merging the inner dict.
+
 ## Key points
 
 - `.items()` is the one to reach for whenever you need both key and value.
@@ -488,6 +708,17 @@ print(class_a - class_b)   # {'Ada', 'Cy'} -- only in class_a
 print("Ada" in class_a)     # True -- O(1) membership check
 ```
 
+## Why it matters
+
+Sets are the right tool whenever you need fast "does this exist" checks or comparisons between groups -- deduplicating a list of emails, finding tags two posts share, checking which usernames are already taken.
+
+## Common mistakes
+
+- Writing `{}` expecting an empty set -- that's an empty dict; use `set()` for an empty set.
+- Assuming a set preserves the order items were added -- it doesn't, and iterating it can print items in a different order than they were inserted.
+- Trying to put unhashable items (like lists) into a set -- `{[1, 2], [3, 4]}` raises `TypeError`; only hashable values are allowed.
+- Building a set from a list to "count" duplicates -- `set(iterable)` collapses duplicates immediately and throws away the counts; use `Counter` if you need how many of each there were.
+
 ## Key points
 
 - `set()` (not `{}`, that's an empty dict) creates an empty set.
@@ -507,6 +738,17 @@ vowels = {ch for ch in "hello world" if ch in "aeiou"}  # set
 
 Read a comprehension right to left after the first expression: "for
 each `n` in `range(6)`, compute `n ** 2`."
+
+## Why it matters
+
+Comprehensions are how idiomatic Python builds transformed collections -- turning raw strings into cleaned values, or filtering rows that meet a condition, is one of the most common one-line patterns you'll see in real codebases.
+
+## Common mistakes
+
+- Putting the `if` in the wrong spot for filtering vs. a conditional expression -- `[x for x in items if x > 0]` filters items out, while `[x if x > 0 else 0 for x in items]` keeps every item and substitutes a value; mixing these up gives the wrong result or a `SyntaxError`.
+- Writing a comprehension purely for its side effects, like `[print(x) for x in items]` -- this builds a throwaway list of `None`s just to run a loop; use a plain `for` loop when you don't need the resulting collection.
+- Confusing `{}` comprehension forms -- `{x for x in items}` builds a set, `{x: y for x, y in pairs}` builds a dict; a single expression inside `{}` is never a dict.
+- Nesting comprehensions until it's unclear which `for` binds to which variable -- if it takes more than one glance to explain, write it as a regular loop instead.
 
 ## Key points
 
@@ -529,6 +771,17 @@ for student in students:
     avg = sum(student["grades"]) / len(student["grades"])
     print(student["name"], avg)
 ```
+
+## Why it matters
+
+Nested structures are what you actually get back from JSON APIs, config files, and database query results -- a list of dicts (rows of records) or a dict of lists is the default shape of real-world data, not the flat lists shown in early exercises.
+
+## Common mistakes
+
+- Chaining access without checking each level exists -- `students[5]["grades"][0]` fails with `IndexError` or `KeyError` at whichever level is actually missing, and the traceback doesn't always make clear which one.
+- Assuming every dict in a list shares the same keys -- real data is often inconsistent, so `student["nickname"]` can raise `KeyError` on some entries even though it worked on others; use `.get()` when a key isn't guaranteed.
+- Writing a nested comprehension and losing track of what gets flattened -- `[g for s in students for g in s["grades"]]` produces one flat list of every grade from every student, which surprises people expecting a list of lists back.
+- Calling `.copy()` on a nested structure expecting a full deep copy -- that only copies the outer layer, so the inner lists/dicts are still shared and mutating them affects the "copy" too; use `copy.deepcopy()` for a truly independent copy.
 
 ## Key points
 
@@ -557,6 +810,17 @@ p = Point(3, 4)
 print(p.x, p.y)                     # 3 4
 ```
 
+## Why it matters
+
+These tools save you from reinventing common patterns by hand -- reaching for `Counter` instead of a manual tally dict, or `defaultdict` instead of littering code with `if key not in d` checks, is what idiomatic Python looks like for tasks like word-frequency counts or grouping records by category.
+
+## Common mistakes
+
+- Using a plain dict and writing `groups[key].append(x)` before that key exists -- raises `KeyError`; that's exactly the boilerplate `defaultdict` removes, so reach for it instead of manual existence checks.
+- Passing `defaultdict` a value instead of a factory function -- `defaultdict([])` is wrong and raises `TypeError`; it needs something callable with no arguments, like `list` or `int`, that it calls to produce each new default.
+- Trying to modify a `namedtuple` field directly, like `p.x = 10` -- namedtuples are immutable like regular tuples, so this raises `AttributeError`; use `p._replace(x=10)` to get a new instance with a field changed.
+- Assuming `Counter` only works on strings -- it works on any iterable (lists, etc.), and can also be combined with `+` or `-` to merge or subtract two counters, which people often overlook.
+
 ## Key points
 
 - `Counter(iterable)` is a dict subclass with counting built in --
@@ -581,6 +845,17 @@ print(fido is rex)        # False -- separate objects
 print(fido.name, rex.name)  # Fido Rex
 ```
 
+## Why it matters
+
+Classes are how you model things that have both data and behavior together -- a `Player` in a game, a `User` in a web app, a `Response` object returned by a library. Nearly every framework you'll touch (Django models, pandas, requests) hands you instances of classes, so recognizing "this is an object created from a blueprint" is a daily skill.
+
+## Common mistakes
+
+- Setting an attribute on the class instead of an instance (`Pet.name = "Fido"`) -- that changes it for every pet, not just one.
+- Forgetting the parentheses when creating an instance (`fido = Pet` instead of `Pet()`) -- `fido` ends up being the class itself, not an object.
+- Assuming two instances with identical attributes are "the same" -- without a custom `__eq__`, `==` compares identity, so equal-looking objects compare unequal.
+- Accessing an attribute before it's been set on that particular instance -- attaching data ad hoc (outside `__init__`) means it simply doesn't exist yet, raising `AttributeError`.
+
 ## Key points
 
 - `ClassName()` creates a new instance; each call makes a distinct object.
@@ -603,6 +878,17 @@ class BankAccount:
 acc = BankAccount("Ada", 100)
 print(acc.owner, acc.balance)   # Ada 100
 ```
+
+## Why it matters
+
+Almost every class you write will start with an `__init__` -- it's the standard way libraries and frameworks (dataclasses, ORMs, GUI widgets) expect an object's starting state to be built from the arguments passed at creation time.
+
+## Common mistakes
+
+- Forgetting the `self.` prefix (`balance = balance` instead of `self.balance = balance`) -- that just creates a local variable that vanishes when `__init__` returns, leaving the instance without the attribute.
+- Trying to call `__init__` directly or expecting to invoke it yourself -- Python calls it automatically when you write `BankAccount(...)`.
+- Using a mutable default argument like `def __init__(self, items=[])` -- the empty list is created once and shared across every instance that doesn't pass its own list, so one instance's changes leak into another's.
+- Expecting `__init__` to return something useful -- it always implicitly returns `None`; its only job is to set up `self`.
 
 ## Key points
 
@@ -634,6 +920,17 @@ acc.withdraw(30)
 print(acc.balance)   # 120
 ```
 
+## Why it matters
+
+This is how nearly every object you already use works under the hood -- `my_list.append(x)`, `"text".upper()`, `response.json()` are all instance methods quietly operating on `self`, so understanding the pattern explains behavior you've been relying on all along.
+
+## Common mistakes
+
+- Forgetting `self` in the method definition (`def deposit(amount):`) -- Python still passes the instance automatically, so the call fails with an argument-count error.
+- Expecting a mutating method to also return the new value -- `acc.deposit(50)` changes `self.balance` and returns `None`, so `result = acc.deposit(50)` gives you `None`, not the balance.
+- Calling the method through the class without supplying an instance (`BankAccount.deposit(50)`) -- `50` ends up being treated as `self`, causing confusing errors.
+- Assuming any function defined inside a class automatically has access to that instance's data -- it only does if it takes `self` and is called through an instance.
+
 ## Key points
 
 - Every instance method needs `self` as its first parameter to access the instance's own attributes.
@@ -663,6 +960,17 @@ BankAccount("Bo")
 print(BankAccount.total_accounts())   # 2
 ```
 
+## Why it matters
+
+Shared, class-level state shows up constantly in real code -- tracking how many objects have been created, storing shared configuration (like Django's `Meta` options), or exposing a constant that every instance should agree on, instead of duplicating the same value on each one.
+
+## Common mistakes
+
+- Writing `self.accounts_created += 1` inside a method, expecting it to update the shared class attribute -- that instead creates a brand-new *instance* attribute that shadows the class one from then on.
+- Using a mutable class attribute (a list or dict) as a shared default -- since it's one object shared by every instance, mutating it through one instance affects all of them.
+- Forgetting `@classmethod` methods receive `cls`, not `self` -- trying to reach instance-specific attributes inside one won't work, since there's no particular instance in scope.
+- Assuming `instance.attr` always reflects the latest class-level value -- once an instance attribute of the same name has been set (even accidentally), it permanently shadows the class attribute for that instance.
+
 ## Key points
 
 - Class attributes are defined directly in the class body, not in `__init__`.
@@ -685,6 +993,17 @@ class BankAccount:
 
 print(BankAccount.calculate_interest(1000, 0.05))   # 50.0 -- no instance needed
 ```
+
+## Why it matters
+
+Static methods are the right home for a helper that's conceptually tied to a class but doesn't need any particular object -- a `Temperature` class's Celsius-to-Fahrenheit converter, or validation helpers grouped under a `Validators` class -- called without ever creating an instance.
+
+## Common mistakes
+
+- Adding `self` or `cls` as a parameter "just in case" even though the method never uses it -- if it doesn't touch instance or class state, leave both out and use `@staticmethod`.
+- Trying to reach instance attributes (`self.balance`) inside a static method -- there's no `self` available, so this raises a `NameError`.
+- Reaching for `@staticmethod` when you actually needed access to the class (`cls`), or vice versa -- pick `@classmethod` if the method needs to know which class it's on.
+- Omitting the decorator and defining a method with no `self`/`cls` parameter -- calling it on an instance then fails, because Python still tries to pass the instance as the first positional argument.
 
 ## Key points
 
@@ -716,6 +1035,17 @@ class SavingsAccount(BankAccount):
         super().withdraw(amount)
 ```
 
+## Why it matters
+
+This is exactly how frameworks are built to be extended -- Django's `models.Model`, Python's own `Exception` hierarchy, and `unittest.TestCase` are all base classes you subclass and customize by overriding just the parts you need, rather than copying their code.
+
+## Common mistakes
+
+- Overriding `__init__` in the subclass and forgetting to call `super().__init__(...)` -- the parent's setup never runs, so attributes it was supposed to create are simply missing.
+- Assuming `isinstance(obj, Parent)` is `False` for an object created from a subclass -- inheritance makes it `True` for both the subclass and every ancestor.
+- Copy-pasting the parent's method body into the child instead of calling `super().method(...)` -- now both copies have to be kept in sync by hand whenever either changes.
+- Overriding a method with different expected inputs or outputs than the parent's version -- breaks any code that was written expecting the original contract to hold.
+
 ## Key points
 
 - `class Child(Parent):` establishes the relationship; `isinstance(obj, Parent)` is true for both.
@@ -741,6 +1071,17 @@ class Car:
 
 print(Car().start())   # Vroom!
 ```
+
+## Why it matters
+
+Real designs lean on this constantly -- a `Car` containing an `Engine`, an HTTP request object holding a headers object, a game `Player` holding an `Inventory` -- because systems built from swappable parts wired together are usually easier to change than deep inheritance chains.
+
+## Common mistakes
+
+- Reaching for inheritance ("a `Car` is an `Engine`") when the real relationship is has-a -- leads to an awkward hierarchy that doesn't match how the pieces actually relate.
+- Forgetting to expose the composed object's behavior through the outer class -- callers end up writing `car.engine.start()` everywhere instead of a clean `car.start()`.
+- Creating the composed object at the wrong scope -- building one `Engine()` at class level instead of one per `Car` inside `__init__` means every car ends up sharing the same engine.
+- Assuming composition and inheritance are an either-or choice -- most real class designs use both together.
 
 ## Key points
 
@@ -772,6 +1113,17 @@ print(acc1)                              # Ada's account: $100 -- uses __str__
 print(acc1 == BankAccount("Bo", 100))    # True -- uses __eq__
 ```
 
+## Why it matters
+
+This is exactly how built-in Python behavior "knows" what to do with your custom objects -- it's why `print(some_object)` can show something readable, why `sorted(list_of_objects)` can work, and why libraries are able to treat your class like a native type.
+
+## Common mistakes
+
+- Defining `__str__` and expecting it to also control how the object looks in a list, a dict, or the REPL -- that's `__repr__`, a separate method with its own fallback behavior.
+- Implementing `__eq__` but not `__hash__` -- defining `__eq__` makes Python treat the class as unhashable by default, so using instances as dict keys or in a set suddenly breaks.
+- Writing `__eq__` without checking the type of `other` -- comparing a `BankAccount` to an `int` or `None` then raises `AttributeError` instead of just returning `False`.
+- Assuming `==` works automatically for custom classes -- without `__eq__`, it falls back to identity (`is`), so two objects with identical data compare as not equal.
+
 ## Key points
 
 - `__str__` controls what `print(obj)` and `str(obj)` show.
@@ -802,6 +1154,17 @@ acc = BankAccount(100)
 print(acc.balance)     # 100 -- reads like an attribute
 acc.balance = 50        # runs the setter's validation
 ```
+
+## Why it matters
+
+This is the standard way real codebases add validation or computed values to something that started as a plain attribute, without breaking every existing line of code that already reads or writes `obj.attr` -- a very common refactor as requirements grow.
+
+## Common mistakes
+
+- Naming the backing attribute the same as the property (`self.balance = value` inside the `balance` setter itself) -- that calls the setter again, causing infinite recursion.
+- Forgetting the `@balance.setter` decorator and just defining a second method named `balance` -- that overwrites the property entirely instead of attaching a setter to it.
+- Expecting to call a property like a method, e.g. `acc.balance()` -- properties are accessed without parentheses, since they're meant to read like plain attributes.
+- Adding the property but never initializing the underlying value (usually `self._balance` in `__init__`) -- reading the property then raises `AttributeError` because there's nothing behind it yet.
 
 ## Key points
 
@@ -835,6 +1198,17 @@ class Circle(Shape):
 print(Circle(2).area())   # 12.56636
 ```
 
+## Why it matters
+
+ABCs are how frameworks enforce interfaces -- `collections.abc.Iterable` requires `__iter__`, and plugin systems use abstract base classes to guarantee every plugin implements the methods the rest of the code will call, catching missing pieces at instantiation instead of at some random call site later.
+
+## Common mistakes
+
+- Forgetting `@abstractmethod` on the method inside the ABC -- without it, the base class doesn't actually enforce anything, and subclasses can silently skip implementing it.
+- Trying to instantiate the ABC directly to reuse its shared code (`Shape()`) -- an ABC is meant only to be subclassed, and Python raises `TypeError` if any abstract method is missing.
+- Forgetting to inherit from `ABC` (or set `metaclass=ABCMeta`) -- the `@abstractmethod` decorator does nothing on its own without that machinery in place.
+- Assuming an abstract method needs real logic in the base class -- a body of just `...` or `pass` is fine and expected, since every concrete subclass is required to override it anyway.
+
 ## Key points
 
 - `Shape(ABC)` plus `@abstractmethod` on a method makes that method
@@ -867,6 +1241,17 @@ for n in Countdown(3):
     print(n)   # 3 2 1
 ```
 
+## Why it matters
+
+Every `for` loop, `list(x)`, `sum(x)`, and unpacking assignment in Python is powered by this protocol under the hood, so understanding it explains errors like `TypeError: 'X' object is not iterable` and why `next()` works on some things but not others. It's also what you implement when you want a custom class (a deck of cards, a paginated API client, a linked list) to work naturally in a `for` loop.
+
+## Common mistakes
+
+- Assuming an iterator can be "restarted" -- once a `StopIteration` is raised, that iterator is permanently exhausted; you need a fresh one (e.g. call `iter()` or the constructor again).
+- Thinking an *iterable* and an *iterator* are the same thing -- a list is iterable but has no `__next__`; you must call `iter(my_list)` to get an actual iterator before `next()` works on it.
+- Forgetting to `return self` from `__iter__` when the object is its own iterator -- returning `None` (the default) makes `for` raise `TypeError: iter() returned non-iterator`.
+- Writing a custom `__next__` that never raises `StopIteration` -- the loop just hangs forever instead of ending.
+
 ## Key points
 
 - `iter(obj)` calls `__iter__`; `next(it)` calls `__next__`.
@@ -891,6 +1276,17 @@ gen = countdown(2)
 print(next(gen))  # 2 -- runs until the first yield
 print(next(gen))  # 1 -- resumes right after that yield
 ```
+
+## Why it matters
+
+Generators are how you process files, database rows, or API results too large to hold in memory all at once -- reading a multi-gigabyte log file line by line with a generator uses almost no extra memory, versus loading it into a list first. They also power common patterns like chained data pipelines and infinite sequences (e.g. an endless counter feeding a loop that breaks on its own condition).
+
+## Common mistakes
+
+- Expecting code before the first `yield` to run the moment you call the function -- calling `countdown(3)` runs nothing yet; the body only starts executing on the first `next()` or loop iteration.
+- Trying to reuse a generator after looping over it once -- it's exhausted after the first full pass, and a second `for` loop over the same object silently produces zero items.
+- Writing `return value` inside a generator expecting it to work like a normal return -- it actually ends the generator (raises `StopIteration`) and the value is mostly inaccessible from a plain `for` loop.
+- Mixing up `(x for x in range(10))` (lazy generator) with `[x for x in range(10)]` (list built immediately) -- calling `len()` on a generator expression raises `TypeError` because it has no length.
 
 ## Key points
 
@@ -919,6 +1315,17 @@ with timer():
     total = sum(range(1_000_000))
 ```
 
+## Why it matters
+
+This is the pattern behind almost every resource-handling line you'll write: opening files, acquiring database connections and locks, or temporarily patching something in tests -- anywhere cleanup absolutely must happen even if the code in between crashes. Writing your own with `@contextmanager` is common for things like temporarily changing a working directory or timing a block of code, as shown above.
+
+## Common mistakes
+
+- Assuming a `with` block silently swallows exceptions raised inside it -- by default it doesn't; the error still propagates unless `__exit__` explicitly returns `True`.
+- Writing a `@contextmanager` function with the cleanup code after `yield` but no `try`/`finally` around it -- if the `with` body raises, the cleanup after `yield` never runs.
+- Putting more than one `yield` in a `@contextmanager` function (or none at all) -- it only supports exactly one `yield` splitting setup from teardown, and violating that raises a `RuntimeError`.
+- Thinking the variable bound with `as f` becomes unusable the instant the block ends -- it's still a normal variable afterward, it's just that the underlying resource (e.g. the file) has been closed, so operations on it will fail.
+
 ## Key points
 
 - `__enter__` runs at the start of `with`; `__exit__` always runs at the end, error or not.
@@ -946,6 +1353,17 @@ def add(a, b):
 add(2, 3)   # prints the two log lines, then returns 5
 ```
 
+## Why it matters
+
+Decorators are everywhere in real frameworks -- `@app.route(...)` in Flask, `@pytest.fixture`, `@property`, `@staticmethod` -- so understanding what `@decorator` actually does demystifies a huge chunk of code you'll read before you write it yourself. They're also the standard way to add cross-cutting behavior like logging, timing, or access checks without copy-pasting that logic into every function.
+
+## Common mistakes
+
+- Writing `wrapper(*args, **kwargs)` but forgetting to `return` the result of calling `func(*args, **kwargs)` -- the decorated function then always returns `None`, even though it clearly computes something.
+- Giving `wrapper` a fixed parameter list (like `def wrapper(a, b):`) instead of `*args, **kwargs` -- it then breaks the moment you decorate any function with a different signature.
+- Forgetting `@functools.wraps(func)` on the wrapper -- the decorated function's `__name__` and docstring become `wrapper`'s instead of the original's, which makes debugging and introspection confusing.
+- Thinking the decorator's own code re-runs on every call -- the outer function body only runs once, at definition time, to build `wrapper`; only `wrapper` itself runs on each call.
+
 ## Key points
 
 - The `wrapper` function is what actually replaces the original --
@@ -966,6 +1384,17 @@ print(list(itertools.product([1, 2], ["a", "b"])))  # [(1,'a'),(1,'b'),(2,'a'),(
 print(list(itertools.combinations([1, 2, 3], 2)))   # [(1,2),(1,3),(2,3)]
 print(list(itertools.islice(range(100), 3)))        # [0, 1, 2]
 ```
+
+## Why it matters
+
+`itertools` shows up whenever you'd otherwise write nested loops -- generating all pairings for a matchup schedule, chaining several lists/files into one pass, or batching a huge stream of data -- and it does this without ever materializing the full result in memory. It's a frequent time-saver over hand-rolled loops in data-processing and scripting code.
+
+## Common mistakes
+
+- Printing an `itertools` call directly and expecting to see the values -- `itertools.chain([1,2],[3,4])` prints as `<itertools.chain object at ...>`; you need `list(...)` (or a `for` loop) to see the contents.
+- Iterating over the same `itertools` result twice -- like generators, most of these are single-use iterators, so the second pass yields nothing.
+- Mixing up `combinations` and `permutations` -- `combinations([1,2,3], 2)` treats `(1,2)` and `(2,1)` as the same pair, while `permutations` counts them separately, so picking the wrong one gives the wrong count of results.
+- Using `islice` on an infinite iterator (like `itertools.count()`) but forgetting it actually consumes items from the underlying iterator -- calling `next()` on that same iterator afterward continues from where `islice` left off, not from the start.
 
 ## Key points
 
@@ -993,6 +1422,17 @@ square = partial(power, exponent=2)
 print(square(5))   # 25
 ```
 
+## Why it matters
+
+These show up constantly in real code: `lru_cache` turns a slow recursive function (like naive Fibonacci or a repeated expensive lookup) fast by skipping redundant work, and `partial` is handy for pre-binding arguments when passing a callback to something like `sorted(key=...)` or a GUI button handler. `reduce` is the general-purpose fold behind many one-liners that combine a whole sequence into a single value.
+
+## Common mistakes
+
+- Applying `@lru_cache` to a function that takes a list or dict argument -- it raises `TypeError: unhashable type` because the cache needs hashable arguments to use as a lookup key; convert to a tuple first if needed.
+- Caching a function that has side effects or depends on mutable external state (like reading a variable that changes) -- `lru_cache` will happily return a stale cached result instead of recomputing.
+- Getting `reduce`'s argument order backwards -- the accumulator is always the *first* argument to your function (`lambda acc, x: ...`), not the second, and mixing that up silently produces wrong totals.
+- Forgetting that `partial` locks in arguments by position unless you pass them as keywords -- calling the resulting partial with a conflicting positional argument for something already fixed raises `TypeError: multiple values for argument`.
+
 ## Key points
 
 - `@lru_cache` only helps for pure functions -- same input, same output, every time.
@@ -1012,6 +1452,17 @@ print(p.suffix)       # '.csv'
 print(p.stem)         # '2024'
 print(p.parent)       # data/reports
 ```
+
+## Why it matters
+
+`pathlib` is what real scripts use to read config files, walk directories, or build output paths that work on both Windows and Linux/Mac without hand-writing `\` vs `/` logic. It's the modern replacement for the older `os.path` string-based functions you'll still see in a lot of existing code.
+
+## Common mistakes
+
+- Treating a `Path` like a plain string and trying `path + "suffix"` -- that raises `TypeError`; use `/` to join segments or convert with `str(path)` first.
+- Assuming creating a `Path("data/file.txt")` object creates or touches the file -- it doesn't; a `Path` is just a description of a location until you call something like `.exists()`, `.read_text()`, or `.write_text()`.
+- Joining an absolute path into the middle of a chain, e.g. `Path("a") / "/b"` -- the leading slash makes `/b` absolute, so the result silently discards `"a"` entirely instead of combining them.
+- Expecting `.suffix` to always find "the extension" -- for a dotfile like `Path(".gitignore")`, `.suffix` is `''` because the leading dot is treated as part of the name, not an extension marker.
 
 ## Key points
 
@@ -1040,6 +1491,17 @@ next_week = today + timedelta(days=7)
 print(next_week)    # 2024-03-22
 ```
 
+## Why it matters
+
+Real programs use `datetime` to compute deadlines, log timestamps, schedule reminders, and calculate durations (like a subscription's days remaining) -- doing that with raw strings or manual day-counting is error-prone and breaks on things like leap years. It also comes up any time you're reading dates from a file, database, or API and need to compare or sort them.
+
+## Common mistakes
+
+- Assuming subtracting two dates gives you a plain number of days -- `date2 - date1` returns a `timedelta` object, and you need `.days` to get the integer.
+- Mixing a timezone-aware `datetime` with a naive one in a comparison or subtraction -- Python raises `TypeError: can't compare offset-naive and offset-aware datetimes` instead of silently doing the "obvious" thing.
+- Mixing up `strftime` format codes, especially `%M` (minutes) vs `%m` (month) -- the code runs fine and produces a string, it's just the wrong one, which is easy to miss.
+- Forgetting that `date` objects have no time component -- comparing a `date` to a `datetime` (which includes time) raises `TypeError`, since they're different types even though they look related.
+
 ## Key points
 
 - Subtracting two `date`/`datetime` objects gives you a `timedelta`, with `.days` etc.
@@ -1063,6 +1525,17 @@ print(parsed["name"])          # 'Ada'
 print(parsed == config)        # True -- round-trips cleanly
 ```
 
+## Why it matters
+
+Almost every web API returns JSON, and most apps use JSON files for config or saved state, so `json.dumps`/`json.loads` is the everyday bridge between Python data and the outside world. You'll reach for it constantly when calling APIs, writing settings files, or persisting a dict to disk between program runs.
+
+## Common mistakes
+
+- Trying to `json.dumps` an object containing a tuple, set, or custom class instance -- tuples silently become JSON arrays (fine), but sets and custom objects raise `TypeError: Object of type X is not JSON serializable`.
+- Using `json.load` (no "s") on a string, or `json.loads` on an open file object -- they're not interchangeable; `load` reads from a file-like object, `loads` parses a string, and swapping them raises an `AttributeError` or `TypeError`.
+- Round-tripping a dict with non-string keys (like integers) and expecting them to stay integers -- JSON object keys must be strings, so `{1: "a"}` comes back as `{"1": "a"}` after a dump/load cycle.
+- Hand-writing JSON with single quotes or a trailing comma -- valid Python dict syntax isn't valid JSON; `json.loads` requires double quotes around strings and no trailing commas, and will raise `json.JSONDecodeError` otherwise.
+
 ## Key points
 
 - JSON's `true`/`false`/`null` map to Python's `True`/`False`/`None`.
@@ -1084,6 +1557,17 @@ print(numbers)   # ['555-0100', '555-0200']
 match = re.search(r"(\d{3})-(\d{4})", text)
 print(match.group(1))   # '555' -- the first captured group
 ```
+
+## Why it matters
+
+Regular expressions are the go-to tool for validating input formats (emails, phone numbers, zip codes), pulling structured data out of messy text (log files, scraped HTML, user input), and doing search-and-replace that's smarter than plain string methods. You'll see `re` in form validation, log parsing, and text-cleaning code across almost any real Python project.
+
+## Common mistakes
+
+- Writing patterns as normal strings instead of raw strings (`"\d+"` instead of `r"\d+"`) -- some escape sequences like `\d` happen to pass through fine, but others (like `\b` or `\n`) get interpreted by Python first and silently change the pattern's meaning.
+- Using `re.match` and expecting it to find a match anywhere in the string -- `re.match` only checks the very beginning; use `re.search` (or add `^`/anchors deliberately) to search the whole string.
+- Calling `.group()` on the result of `re.search`/`re.match` without checking for `None` first -- if there's no match, the call raises `AttributeError: 'NoneType' object has no attribute 'group'`.
+- Forgetting that characters like `.`, `*`, `+`, `?`, `(`, and `[` are special in regex -- trying to match a literal period or parenthesis without escaping it (`\.`, `\(`) matches far more (or less) than intended.
 
 ## Key points
 
@@ -1109,6 +1593,17 @@ project automatically -- no manual test-runner code needed. This app's
 playground can't invoke the real `pytest` command, but the `assert`
 statements themselves run exactly the same either way.
 
+## Why it matters
+
+Real projects run their test suite automatically on every commit (via CI), so a stack of `test_*` functions is what lets you catch a bug before it reaches production and refactor a function's internals with confidence nothing broke. When you fix a bug, writing a test that fails before the fix and passes after is how you prove the fix actually works and stop the bug from silently coming back later.
+
+## Common mistakes
+
+- Writing a test that re-derives the expected value from the same logic under test (e.g. `assert is_even(4) == (4 % 2 == 0)`) -- it always passes no matter how buggy the function is; assert a known, hardcoded input/output pair instead.
+- Forgetting the `test_` prefix on the function or file name -- pytest silently skips anything that doesn't match, so a "passing" suite may not include the test at all.
+- Testing only the happy path and never an edge case (empty list, zero, negative number) -- most real bugs live at the edges, not the middle.
+- Comparing floats with `==` (e.g. `assert x == 0.3`) -- floating-point rounding means this can fail even when the math is correct; use `pytest.approx()` for float comparisons.
+
 ## Key points
 
 - A good test asserts something that would actually fail if the code
@@ -1133,6 +1628,17 @@ This app's playground can't run the real `mypy` CLI, but you can inspect
 a function's declared hints directly at runtime via `__annotations__`,
 which is what the exercises below do.
 
+## Why it matters
+
+Type hints are what powers autocomplete and inline documentation in editors like VS Code and PyCharm, and running `mypy` in CI catches whole categories of bugs -- like passing a string where a function expects a number -- before the code ever runs. Large codebases lean on them heavily because changing a function's signature without hints turns every call site into a guessing game.
+
+## Common mistakes
+
+- Assuming a type hint is enforced at runtime -- it isn't; `def add(a: int, b: int)` will happily run `add("2", "3")` and concatenate the strings, since hints are just documentation that mypy (not Python) reads.
+- Writing `def f(x: list):` and expecting mypy to know what's inside the list -- use `list[int]` to specify the element type, otherwise mypy treats the contents as unknown.
+- Giving a parameter a default of `None` without updating the hint -- `def f(x: int = None)` is a type error to mypy even though it runs fine; it needs to be `int | None` (or `Optional[int]`).
+- Leaving off a return hint and assuming that means "returns nothing" -- omitting the hint means "unannotated" to mypy, which is different from explicitly writing `-> None`.
+
 ## Key points
 
 - Hints are documentation *and* input for tools like mypy -- Python itself mostly ignores them at runtime.
@@ -1155,6 +1661,17 @@ pip (no filesystem or subprocess access in the browser sandbox), but the
 exercises below work with the *data* around dependency management --
 parsing and building requirements-file-style text -- which is the part
 you'll actually script against.
+
+## Why it matters
+
+Every real Python project you clone expects you to create a venv and `pip install -r requirements.txt` before anything runs -- skip it and you get `ModuleNotFoundError`, or worse, silently use whatever version happened to be installed for a different project. It's also what lets two projects on the same machine depend on different, even incompatible, versions of the same library without one breaking the other.
+
+## Common mistakes
+
+- Running `pip install` without activating the venv first -- it installs into whichever environment is currently active (often the system Python), and the project still can't find the package.
+- Assuming `pip freeze` only lists what you explicitly typed `pip install` for -- it dumps every package present, including transitive dependencies pulled in automatically, which is why generated requirements files look longer than expected.
+- Opening a new terminal and forgetting the venv isn't active there -- activation is per-terminal-session; the `(.venv)` prefix in the prompt is the tell that it's on.
+- Committing the `.venv` folder to git -- it's large, machine-specific, and fully regeneratable from `requirements.txt`; only the requirements file (or `pyproject.toml`) belongs in version control.
 
 ## Key points
 
@@ -1184,6 +1701,17 @@ which is genuinely how tools like these are built under the hood. The
 exercises below use it to catch one class of real lint issue: unused
 imports.
 
+## Why it matters
+
+Teams run `ruff`/`black` plus `pre-commit` so code review stays focused on logic instead of tabs-vs-spaces arguments, and catching an unused import or unreachable branch before a commit is far cheaper than catching it after it ships. Most open-source Python projects reject a pull request outright if it fails these checks in CI.
+
+## Common mistakes
+
+- Assuming a formatter like `black` checks for bugs -- it only rewrites style (spacing, quotes, line length) and will happily reformat code that is completely wrong.
+- Auto-applying every suggested lint fix without reading it -- some "unused" imports are actually kept for a side effect (like registering a plugin), so blind auto-fix can silently change behavior.
+- Installing `pre-commit` with pip but forgetting to run `pre-commit install` -- without that one-time step the hooks are never wired into `git commit`, and nothing actually runs.
+- Expecting a linter to catch logic errors -- it flags patterns it recognizes (unused variables, obvious duplication), not whether the code produces the right answer.
+
 ## Key points
 
 - Linters catch *likely bugs* (unused variables, unreachable code);
@@ -1208,6 +1736,17 @@ logger.info("starting import job")
 logger.warning("skipped 3 malformed rows")
 logger.error("failed to connect to database")
 ```
+
+## Why it matters
+
+Once code is deployed you can't attach a debugger to it, so log output -- often shipped to a file or a service like CloudWatch -- is frequently the only way to figure out what happened after something went wrong in production. Being able to turn on `DEBUG` logging for one module without touching code is what makes diagnosing a live issue actually tractable.
+
+## Common mistakes
+
+- Calling `logger.debug(...)` and expecting to see it, without realizing the configured level (`INFO` or the default `WARNING`) silently drops anything below it.
+- Using the module-level `logging.info(...)` everywhere instead of a logger from `getLogger(__name__)` -- it still works, but you lose the ability to tell which module a message came from once the codebase grows.
+- Calling `basicConfig()` more than once across different modules, expecting each call to reconfigure logging -- typically only the first call has any effect, later ones are silently ignored.
+- Logging sensitive data (passwords, full request bodies) at `INFO` or `DEBUG` "just for debugging" -- log files often get retained or shipped somewhere else, so that data ends up stored in plaintext.
 
 ## Key points
 
@@ -1236,6 +1775,17 @@ This app's playground can't run a real build tool against a
 metadata as plain Python dicts -- the structure a TOML parser would
 hand you after reading the file.
 
+## Why it matters
+
+`pyproject.toml` is what turns a folder of `.py` files into something installable with `pip install`, publishable to PyPI, or listable as another project's dependency -- it's the file every modern build tool (`pip`, `poetry`, `hatch`) reads first. Getting the dependency list right here is what makes `pip install your-package` pull in exactly what the code needs, no more and no less.
+
+## Common mistakes
+
+- Pinning every dependency to an exact version (`==2.28.0`) in a library meant to be reused -- this often causes conflicts when another project depends on the same library but needs a different exact version; libraries usually want a range like `>=2.28` instead.
+- Editing `pyproject.toml` and expecting an already-installed copy of the package to update itself -- changes only take effect after reinstalling (`pip install -e .` for development, or `pip install .`).
+- Assuming `[project]` is the only table that matters -- build-backend configuration lives in separate tables (e.g. `[tool.setuptools]`), and a missing `[build-system]` table means the project can't be built at all.
+- Listing dev-only tools like `pytest` or `ruff` under the main `dependencies` list -- those normally belong in an optional group (e.g. `[project.optional-dependencies]`) so end users installing the package don't pull them in too.
+
 ## Key points
 
 - `[project]` is the standard table for name/version/dependencies; other
@@ -1261,6 +1811,17 @@ git push -u origin add-user-search
 This app's playground can't run real git commands, but the exercises
 below work with the same kind of data git itself manages -- commit
 message strings and simple diff-like structures.
+
+## Why it matters
+
+A messy commit history ("fix", "fix again", "asdf") makes `git log` and `git blame` useless when you're trying to figure out why a line of code exists months later, while small, clearly described commits are what actually make code review possible on a team. Feature branches also let you keep working without leaving `main` in a half-broken state that would block a teammate's deploy.
+
+## Common mistakes
+
+- Writing commit messages in past tense ("Fixed bug", "Added feature") instead of the imperative mood git's own tooling uses ("Fix bug", "Add feature") -- a style convention, but consistency helps both reviewers and automated changelogs.
+- Bundling multiple unrelated changes into one commit (a typo fix, a new feature, and an unrelated refactor together) -- makes the change hard to review and impossible to revert just one part of later.
+- Committing directly to `main` instead of a feature branch -- works fine solo, but on a team it means unfinished or broken code is immediately live on the branch everyone else builds from.
+- Assuming `git push` opens a pull request by itself -- pushing a branch only uploads the commits; opening and getting the PR reviewed is a separate step.
 
 ## Key points
 
@@ -1288,6 +1849,17 @@ async def fetch_all(urls):
 results = asyncio.run(fetch_all(["a", "b", "c"]))
 ```
 
+## Why it matters
+
+A web scraper hitting hundreds of URLs finishes in seconds with `asyncio` instead of minutes fetching them one at a time, while a script resizing thousands of images maxes out a single CPU core unless the work is spread across processes with `multiprocessing`. Picking the wrong tool doesn't just waste effort -- threading a CPU-bound loop can make it *slower* than the plain sequential version because of the added overhead with none of the benefit.
+
+## Common mistakes
+
+- Reaching for `threading` to speed up CPU-bound work (a pure-Python numeric loop, image processing) -- the GIL means threads don't run Python bytecode in parallel, so use `multiprocessing` instead.
+- Calling a coroutine without `await` (`fetch(url)` instead of `await fetch(url)`) -- this just creates a coroutine object and does nothing; no error, no output, no work done.
+- Putting a blocking call (`time.sleep()`, a synchronous `requests.get()`) inside an `async def` function -- it freezes the *entire* event loop, not just that one task, defeating the purpose of asyncio.
+- Assuming `multiprocessing` shares memory the way threads do -- data passed between processes is pickled and copied, so mutating a list inside a child process has no effect on the parent's copy.
+
 ## Key points
 
 - The GIL (Global Interpreter Lock) means only one thread runs Python
@@ -1313,6 +1885,17 @@ slow_function()
 profiler.disable()
 profiler.print_stats(sort="cumulative")
 ```
+
+## Why it matters
+
+Before rewriting a slow API endpoint or batch script, profiling tells you whether the real bottleneck is a database query, a nested loop, or string concatenation -- optimizing the wrong part wastes time and often makes the code harder to read for zero speedup. This is the actual first step professionals take before touching performance-sensitive code, rather than guessing.
+
+## Common mistakes
+
+- Micro-optimizing a function because it "feels" slow, without checking the profiler output first -- the real bottleneck is often somewhere unexpected, like a function called thousands of times in a loop.
+- Profiling a run that includes one-time setup cost (imports, first-call caching) and drawing conclusions from that -- warm up the code or run it multiple times before trusting the numbers.
+- Confusing `tottime` (time spent in the function itself) with `cumtime` (time including everything it calls) -- a function with high `cumtime` but low `tottime` isn't slow itself, something it calls is.
+- Treating cProfile's absolute times as accurate wall-clock measurements -- the profiler's own overhead inflates every number, so compare relative proportions between functions, not real-world seconds.
 
 ## Key points
 
@@ -1340,6 +1923,17 @@ del x
 gc.collect()
 print(ref())   # None -- the object is gone, and the weak reference doesn't keep it alive
 ```
+
+## Why it matters
+
+This explains real bugs in long-running programs -- a service that slowly eats more and more memory usually has objects kept alive by a reference you forgot about (a cache, a closure, a growing list), not a mysterious "leak." Understanding reference counting is also what makes context managers (`with open(...) as f`) and connection cleanup make sense: closing a resource and letting the object die are related but separate things.
+
+## Common mistakes
+
+- Expecting `del x` to immediately free the underlying memory -- it only removes *that one* reference; the object survives as long as anything else (a list, a cache, a closure) still points to it.
+- Assuming objects that reference each other in a cycle (like a two-way parent/child tree) leak permanently in Python -- the cyclic garbage collector does clean these up, just not instantly the way plain reference counting does.
+- Reading `sys.getrefcount(obj)` as the exact number of "real" references in your code -- it's inflated by one because passing `obj` into the function call itself creates a temporary reference.
+- Sprinkling `gc.collect()` calls throughout normal code, assuming it's needed to free memory -- the collector already runs automatically; calling it manually everywhere just adds overhead.
 
 ## Key points
 
@@ -1369,6 +1963,17 @@ An ORM (like SQLAlchemy or Django's) maps rows to Python objects
 automatically, so you write `user.name` instead of `row[1]` -- but under
 the hood, it's still running SQL through a connection exactly like this.
 
+## Why it matters
+
+Nearly every real app that stores data -- a to-do list, an online store, an internal admin tool -- is a program reading from and writing to a database exactly like this. This is also what's happening underneath every Django or Flask backend when a view saves a record or loads a user's profile, whether it's raw SQL or an ORM call.
+
+## Common mistakes
+
+- Building SQL with an f-string (`f"WHERE id = {user_input}"`) instead of a `?` placeholder -- this isn't just sloppy, it's a SQL injection vulnerability the moment `user_input` comes from outside the program.
+- Forgetting `conn.commit()` after an `INSERT`/`UPDATE`/`DELETE` -- the change can be invisible to other connections, or lost entirely, without it.
+- Calling `.fetchone()` when there could be multiple matching rows (silently gets only the first) or `.fetchall()` on a huge table (loads every row into memory at once).
+- Assuming an ORM means never thinking about SQL -- looping over a relationship attribute (e.g. `for order in user.orders`) can quietly issue one query per iteration (the "N+1 queries" problem), a common real-world performance bug.
+
 ## Key points
 
 - Always use `?` placeholders for values, never string-formatting SQL directly -- that's how SQL injection happens.
@@ -1395,6 +2000,17 @@ library, and the browser sandbox restricts arbitrary cross-origin
 fetches), so the exercises below work with the structure of requests
 and responses directly -- URLs, headers, retry logic -- which is
 exactly what you're manipulating when you do use `requests` for real.
+
+## Why it matters
+
+Every API call a real program makes -- checking the weather, charging a payment, logging in with OAuth -- is built out of exactly these pieces: a URL, query parameters, headers, and a body. Debugging a failed `requests.get()` call in production almost always comes down to inspecting one of these pieces directly, which is what these exercises practice without needing the network itself.
+
+## Common mistakes
+
+- Concatenating query parameters into a URL by hand (`url + "?q=" + value`) instead of using `urlencode` -- special characters like spaces or `&` inside a value will silently corrupt the URL.
+- Assuming a network call always succeeds -- code with no timeout or retry logic can hang indefinitely the first time a request is slow or fails.
+- Treating any response object as a success just because one came back, instead of checking `status_code` -- a 404 or 500 response is still a returned object, not a success.
+- Retrying a failed request forever with no limit or backoff -- this can hammer a struggling server and get your client rate-limited or blocked entirely.
 
 ## Key points
 
@@ -1431,6 +2047,17 @@ in the browser sandbox), so the exercises below implement the same
 framing and message-handling logic a real socket server would use,
 just without an actual socket underneath.
 
+## Why it matters
+
+Every network library you'd use in real code -- `requests`, a database driver, a web server -- is built on top of raw sockets exactly like this. Understanding framing explains real bugs, like a chat or game server that "loses" part of a message: TCP doesn't guarantee messages arrive in the same chunks they were sent in, so the application has to know where one message ends and the next begins.
+
+## Common mistakes
+
+- Assuming one `send()` call on one end lines up with one `recv()` call on the other -- TCP is just a byte stream, so a message can arrive split across multiple `recv()` calls or merged with the next one.
+- Skipping framing entirely and assuming "one message per `recv()`" -- without a length prefix or delimiter, there's no reliable way to know where a message ends.
+- Getting the length-prefix format wrong (e.g. not zero-padding to a fixed width) so parsing breaks the moment a message's length changes digit count.
+- Assuming a socket server automatically handles multiple clients correctly -- without tracking each connection (and its own buffer) separately, data from different clients can get mixed together.
+
 ## Key points
 
 - TCP delivers a stream of bytes with no built-in concept of "messages" --
@@ -1452,6 +2079,17 @@ data_track = {"pandas", "statistics", "visualization"}
 
 overlap = len(my_interests & web_backend_track)   # 2
 ```
+
+## Why it matters
+
+Job postings and team structures are organized around tracks like this -- "backend engineer," "data analyst," "automation engineer" -- so hiring managers and recruiters scan for a track-shaped skill set, not a vague "knows Python." Picking a track also gives you a natural portfolio project to build (an API, a data pipeline, a script suite) instead of a scattered pile of unrelated exercises.
+
+## Common mistakes
+
+- Treating the choice as permanent and agonizing over it -- pick based on current interest and opportunity, since most skills transfer between tracks anyway.
+- Trying to learn two or three tracks in parallel at the start -- splitting effort this way usually means never getting deep enough in any one to build something real.
+- Assuming a track means learning a whole new language or toolchain -- it's still Python, plus a handful of domain-specific libraries and conventions.
+- Picking a track purely by "what pays most" without checking you'll enjoy the daily work -- losing interest halfway through stalls progress far more than an imperfect track choice does.
 
 ## Key points
 
@@ -1480,6 +2118,17 @@ This app's playground doesn't have FastAPI/Flask/pandas/Typer installed
 below implement the same core mechanics -- routing, dispatch, simple
 CLI parsing -- directly, which is exactly what those frameworks do
 underneath their decorators.
+
+## Why it matters
+
+Real backend jobs run on FastAPI/Flask/Django, real data jobs run on pandas, and real CLI tools use Typer/Click/argparse -- these are the exact libraries listed in job postings and imported at the top of nearly every production file in that domain, so recognizing their core mechanics is what lets you read (and eventually write) that code.
+
+## Common mistakes
+
+- Assuming decorators like `@app.get("/users/{id}")` are magic -- they're just registering a function in a lookup table the framework checks on each incoming request, the same idea as the `match_route` example.
+- Confusing a path parameter (`/users/{id}`) with a query parameter (`/users?id=5`) -- frameworks parse and route these differently, and mixing up the syntax is a common source of "404 when it should match" bugs.
+- Not realizing route order/specificity matters -- a broad or catch-all route defined before a more specific one can shadow it, so the specific route never gets reached.
+- Expecting FastAPI/Flask/pandas/Typer to just be available -- this sandbox doesn't have them installed, so the exercises implement the same mechanics directly; in a real project you'd `pip install` the library first.
 
 ## Key points
 
@@ -1511,6 +2160,17 @@ This app's playground doesn't have Pydantic installed, so the exercises
 below hand-roll the same validation/serialization patterns Pydantic
 automates for you in a real project.
 
+## Why it matters
+
+Any code that accepts JSON from an API request, a config file, or user input needs to check the data's shape before trusting it -- Pydantic (or a hand-rolled check like `validate_user`) is what stands between one clear error raised at the boundary and malformed data silently breaking three unrelated functions downstream.
+
+## Common mistakes
+
+- Validating types but not values -- confirming `age` is an `int` still lets `-5` or `999999` through; real constraints need explicit range or logic checks on top of the type check.
+- Treating a missing key the same as an invalid one -- `data.get("name")` quietly returns `None` for a missing key, which is a different failure mode than a `name` of the wrong type, and both need to be handled.
+- Assuming validation happens automatically everywhere in a program -- it only catches bad data at the exact point you call the check; skip that boundary once and invalid data flows through unguarded.
+- Mixing up serialization (model to dict/JSON, for sending data out) with parsing (dict/JSON to model, for receiving it) -- they're inverse operations, and confusing them is a common source of "why is this field missing" bugs.
+
 ## Key points
 
 - Validate at the boundary (where external data enters your system) --
@@ -1536,6 +2196,17 @@ This app's playground obviously can't build or run real containers, so
 the exercises below parse Dockerfile-shaped text directly -- the same
 structure a real `docker build` reads through when it processes yours.
 
+## Why it matters
+
+Shipping a Python app to a server, a teammate's machine, or a cloud provider almost always means packaging it as a container, and every real deployment pipeline -- CI/CD, Kubernetes, or a cloud "run this image" service -- starts from a Dockerfile like the one above.
+
+## Common mistakes
+
+- Writing many separate `RUN` lines out of habit -- each one adds a full image layer, bloating build time and image size; combining related commands with `&&` is the standard fix.
+- Forgetting that `EXPOSE` doesn't actually publish a port -- it's documentation only, and the port is published at runtime with `docker run -p`; skipping that leaves the container unreachable even though it "looks" exposed.
+- Copying the whole project before installing dependencies (`COPY . /app` then `RUN pip install`) -- this invalidates Docker's build cache on every code change, so dependencies reinstall even when only application code changed, not requirements.
+- Assuming the base image already has your project's dependencies -- `FROM python:3.12-slim` only gives you Python itself; anything your code imports still needs an explicit `RUN pip install`.
+
 ## Key points
 
 - `FROM` sets the base image everything else builds on top of.
@@ -1557,6 +2228,17 @@ tree = ast.parse(source)
 functions = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
 print(functions)
 ```
+
+## Why it matters
+
+Understanding a library you depend on, or fixing a bug in one, means reading unfamiliar code you didn't write -- which is most of what professional Python development actually looks like day to day. Tools built on `ast.walk`, like the one above, work the same way linters, formatters, and an IDE's "jump to definition" feature do under the hood.
+
+## Common mistakes
+
+- Starting by reading the main implementation top to bottom -- tests and docstrings usually explain intended usage faster than tracing through implementation logic first.
+- Assuming a first contribution needs to be a big feature -- maintainers are far more likely to merge a small doc fix or a test for an untested edge case, and it teaches you the codebase's conventions with much less risk.
+- Confusing `ast.parse` (turns source text into a tree of nodes) with running the code -- `ast.walk` only inspects structure statically, so it can tell you a function's name and arguments but nothing about what it actually returns.
+- Opening a pull request without reading the project's contributing guidelines first -- most active projects have specific formatting, testing, or commit-message requirements, and skipping them is the fastest way to get a PR ignored or sent back for changes.
 
 ## Key points
 
@@ -1581,6 +2263,17 @@ def linear(items):
 def quadratic(items):
     return [(a, b) for a in items for b in items]   # O(n^2) -- n steps per item
 ```
+
+## Why it matters
+
+Interviewers almost always follow up a solution with "what's the time complexity here?" -- fluently answering that shows you understand tradeoffs, not just syntax. In real code, Big-O reasoning is what tells you a query that's instant on a 100-row test table will time out on a 10-million-row production one.
+
+## Common mistakes
+
+- Seeing a loop and assuming O(n) without checking what happens *inside* it -- a loop containing another loop over the same input is O(n^2), not O(n).
+- Treating average-case and worst-case as the same number -- a hash-table lookup is "O(1)" on average but O(n) worst-case with enough collisions, and interviewers will probe for that distinction.
+- Adding complexities for sequential steps instead of taking the larger one -- two separate O(n) loops back to back is still O(n) overall, not O(n^2).
+- Assuming the algorithm with the better Big-O always runs faster -- for small or fixed input sizes, a "worse" O(n^2) approach with low overhead can beat an O(n log n) one in practice.
 
 ## Key points
 
@@ -1610,6 +2303,17 @@ def binary_search(sorted_items, target):
     return -1
 ```
 
+## Why it matters
+
+Binary search is one of the most-asked interview questions precisely because it's easy to get subtly wrong under pressure, and choosing the right sort matters in real code too -- a hand-rolled O(n^2) sort on a growing dataset is a performance bug waiting to be filed.
+
+## Common mistakes
+
+- Running binary search on data that isn't actually sorted -- it doesn't error, it just silently returns the wrong index (or -1) with no warning.
+- Off-by-one mistakes in the bounds, like using `high = len(items)` instead of `len(items) - 1`, or forgetting to update `low`/`high` on every branch, which can loop forever.
+- Mixing up which sorts are O(n^2) vs O(n log n) when asked in an interview -- bubble/selection/insertion sort are O(n^2); Timsort (what `sorted()` uses) is O(n log n).
+- Reimplementing a sort by hand in real (non-interview) code instead of just calling `sorted()`/`.sort()`, adding bugs and complexity for no benefit.
+
 ## Key points
 
 - Binary search needs a *sorted* input -- it's O(log n) because each
@@ -1632,6 +2336,17 @@ def factorial(n):
 
 print(factorial(5))   # 120
 ```
+
+## Why it matters
+
+Recursion problems (reverse a structure, traverse a tree, backtrack through combinations) are interview staples, and understanding the call stack behind recursion is exactly what lets you debug a real `RecursionError: maximum recursion depth exceeded` instead of being baffled by it.
+
+## Common mistakes
+
+- Writing a recursive call that doesn't actually shrink the problem (e.g., calling `factorial(n)` instead of `factorial(n - 1)`), which recurses forever until Python hits its recursion limit.
+- A base case that exists but never triggers for some inputs -- like only handling `n == 0` when a caller passes a negative number, so it overshoots and never stops.
+- Forgetting to `return` the recursive call's result (`factorial(n - 1)` as a bare statement instead of `return n * factorial(n - 1)`), which silently produces `None`.
+- Assuming recursion is performance-neutral compared to a loop -- every call adds a stack frame, so deep recursion can be noticeably slower and more memory-hungry than the iterative equivalent.
 
 ## Key points
 
@@ -1659,6 +2374,17 @@ queue.append(1)
 queue.append(2)
 print(queue.popleft())   # 1 -- first one in, first one out
 ```
+
+## Why it matters
+
+"Valid parentheses" and level-order tree traversal are go-to interview questions built directly on stacks and queues, and picking the wrong one in real code creates a performance bug that only shows up at scale.
+
+## Common mistakes
+
+- Using `list.pop(0)` to implement a queue because it works on small inputs -- it's O(n) per call, which quietly turns an O(n) algorithm into O(n^2); use `collections.deque.popleft()` instead.
+- Mixing up which end is "front" -- for a stack both `append`/`pop` act on the same end, but for a queue you add at one end (`append`) and remove from the other (`popleft`).
+- Popping from an empty stack or queue without checking first, causing an `IndexError` mid-algorithm.
+- Not recognizing that the Python call stack behind recursion *is* a stack -- which is exactly why deep recursion can be rewritten as an explicit loop with your own stack.
 
 ## Key points
 
@@ -1691,6 +2417,17 @@ each node to a list of its neighbors -- and explored with breadth-first
 search (BFS, level by level) or depth-first search (DFS, all the way
 down one path before backtracking).
 
+## Why it matters
+
+Tree and graph traversal is probably the single most common category of coding interview question (BFS/DFS, shortest path, tree depth), and the same adjacency-list-plus-traversal pattern shows up in real systems like dependency resolution, routing, and org-chart lookups.
+
+## Common mistakes
+
+- Forgetting a `visited` set when traversing a graph -- trees have no cycles so this bug doesn't appear until you move from tree problems to graph problems, where it causes an infinite loop.
+- Assuming DFS finds the shortest path the way BFS does -- DFS only guarantees it finds *a* path, not the shortest one, on an unweighted graph.
+- Treating a tree node with no children as a special error case instead of the natural recursive base case (`if node is None: return ...`).
+- Building an adjacency list for an undirected graph but only adding the edge in one direction, which silently turns it into a directed graph.
+
 ## Key points
 
 - Tree algorithms are almost always naturally recursive -- "the answer
@@ -1714,6 +2451,17 @@ print(heapq.heappop(scores))    # 1 -- always the smallest
 top_3 = heapq.nlargest(3, [5, 1, 9, 3, 7])
 print(top_3)                     # [9, 7, 5]
 ```
+
+## Why it matters
+
+"Find the k largest/smallest elements" and "merge k sorted lists" are recurring interview problems that heaps solve directly, and the same structure backs real systems like task schedulers and Dijkstra's shortest-path algorithm.
+
+## Common mistakes
+
+- Assuming `heapq` gives a max-heap -- it's always a min-heap, so forgetting to negate values (or just use `nlargest`) gets you the smallest item first, not the largest.
+- Assuming `heapify`/heap order means the whole list is sorted -- only index 0 is guaranteed to be the min; the rest of the list is not in sorted order.
+- Sorting the entire collection with `sorted()` for a top-k problem instead of `heapq.nlargest`/`nsmallest`, doing more work than needed.
+- Indexing directly into the heap list (e.g. `heap[1]`) expecting a meaningful value -- no position besides `heap[0]` has a guaranteed ordering.
 
 ## Key points
 
@@ -1743,6 +2491,17 @@ def has_pair_with_sum(sorted_nums, target):
     return False
 ```
 
+## Why it matters
+
+"Two sum on a sorted array" and "longest substring without repeating characters" are staple interview problems that exist specifically to test whether you reach for an O(n) two-pointer or sliding-window approach instead of an O(n^2) brute-force nested loop.
+
+## Common mistakes
+
+- Applying the two-pointer sum technique to unsorted data -- the logic for which pointer to move depends entirely on the array being sorted.
+- Moving both pointers on every iteration instead of only the one whose value needs to change, which breaks the invariant that makes the technique O(n) in the first place.
+- Recomputing the window's sum/count from scratch each time it slides, instead of incrementally adding the entering element and removing the leaving one -- this quietly turns an intended O(n) solution back into O(n^2).
+- Forgetting to shrink the window when its condition is violated (e.g., a duplicate appears), so the window only grows and the final answer is wrong.
+
 ## Key points
 
 - Two pointers typically need a *sorted* input to know which direction
@@ -1762,6 +2521,17 @@ against edge cases, narrating each step out loud.
 3. Code: (write it)
 4. Test: empty input, single item, all duplicates, the given example
 ```
+
+## Why it matters
+
+Interviewers weight *how* you approach a problem almost as much as the final code -- narrating clarifying questions, complexity, and edge cases is what turns a correct-but-silent solution into a strong signal, and the same habit of checking assumptions before diving in is what makes real debugging and code review faster too.
+
+## Common mistakes
+
+- Jumping straight into coding before clarifying constraints, then having to backtrack when an untested case like empty input or duplicates comes up.
+- Thinking silently while working instead of narrating the plan out loud -- it leaves the interviewer no way to redirect a wrong approach early.
+- Mentioning complexity only when directly asked, instead of stating it up front as part of explaining the approach.
+- Treating "it passed the one given example" as done, without separately testing empty input, a single element, or all-duplicate cases the example didn't cover.
 
 ## Key points
 
@@ -1786,6 +2556,17 @@ scope = {
 }
 ```
 
+## Why it matters
+
+The gap between a tutorial exercise and a portfolio project is usually just this: a tutorial tells you what to build, but a capstone makes you decide it yourself, and without a scope doc that decision keeps changing every time you sit down to code. Recruiters and reviewers can tell within a minute whether a project had a plan or just accumulated features -- unfinished branches, half-built settings pages, and READMEs that promise things the app doesn't do are the tell.
+
+## Common mistakes
+
+- Treating scoping as a formality to skip so you can "just start coding" -- most capstones that never ship die from lack of a written scope, not lack of skill.
+- Writing a feature list with no non-goals, so every mid-build idea ("what if it also had...") feels equally justified and scope creep eats the deadline.
+- Scoping the whole finished product instead of a v1 -- an ambitious plan you're still building in month three is worse than a small one you shipped in week two.
+- Picking a project idea because it sounds impressive rather than because you can actually finish it -- an unfinished ambitious project shows less than a finished modest one.
+
 ## Key points
 
 - Explicit non-goals are as valuable as the goals -- they're what you
@@ -1808,6 +2589,17 @@ architecture = {
     "database": [],
 }
 ```
+
+## Why it matters
+
+In a real codebase, nobody hands you a diagram -- you either write one as you go or you (and anyone reviewing your project) have to reverse-engineer the design from the code itself. A short architecture writeup is also one of the fastest ways to catch a circular dependency before it's baked into your imports, which in Python shows up as a confusing `ImportError` you only discover once the codebase is already tangled.
+
+## Common mistakes
+
+- Skipping the diagram because "it's just a small project" -- small projects are exactly where an undocumented design turns into spaghetti fastest, since there's no structure forcing you to keep boundaries clean.
+- Letting two modules import from each other directly, creating a circular import that works today and breaks the moment you reorder imports or add a new one.
+- Writing the architecture doc once at the start and never touching it again, so it describes a design the code abandoned weeks ago -- an ADR is only useful if you update it when a decision changes.
+- Over-designing upfront with layers and abstractions the project doesn't need yet -- a diagram should reflect the pieces you're actually building, not a hypothetical enterprise version.
 
 ## Key points
 
@@ -1833,6 +2625,17 @@ steps:
   - deploy
 ```
 
+## Why it matters
+
+A green CI badge on your repo's README is one of the first things a reviewer or hiring manager actually checks, because it's proof the project works on more than just your machine on the day you demoed it. Tests you write only at the end tend to just confirm the code already does what it does -- tests written alongside the code are the ones that actually catch the bug before it ships.
+
+## Common mistakes
+
+- Leaving all testing for the last week of the capstone -- by then the codebase is large enough that writing tests feels like a chore, and bugs from early modules go unnoticed until users hit them.
+- Chasing a coverage percentage instead of coverage that matters -- 100% coverage on trivial getters while your core logic has zero tests looks good on paper and catches nothing.
+- Writing only happy-path tests ("it works when everything goes right") and never testing what happens with bad input, empty data, or a failed network call -- those are exactly the cases that break in production.
+- Setting up CI but not actually making it block anything -- a pipeline that runs tests but still lets a failing build merge or deploy isn't protecting you from regressions.
+
 ## Key points
 
 - High coverage on code nobody runs in production is much less
@@ -1854,6 +2657,17 @@ def health_check(db_ok, cache_ok):
 print(health_check(True, True))    # {'status': 'healthy'}
 print(health_check(True, False))   # {'status': 'unhealthy'}
 ```
+
+## Why it matters
+
+A capstone that only runs on `localhost` isn't done -- a real deployment means real users can hit an edge case you never tested, and monitoring is how you find out about it before someone complains instead of after. This is also where a lot of "finished" portfolio projects quietly fail: the demo works during the interview, but there's no way to tell if it's still working a week later.
+
+## Common mistakes
+
+- Deploying once and assuming it'll keep working -- without a health check or basic logging, the first sign of trouble is a user reporting it, or nothing at all.
+- Hardcoding secrets, API keys, or database URLs that worked locally straight into the deployed config, instead of using environment variables -- this both breaks across environments and risks leaking credentials if the repo is public.
+- Writing a health check that only confirms "the process is running" rather than checking the dependencies (database, cache, external API) the app actually needs to function.
+- Treating the first successful deploy as the finish line and never checking logs or metrics again, so a slow memory leak or rising error rate goes unnoticed.
 
 ## Key points
 
@@ -1880,6 +2694,17 @@ python -m myproject --help
 - Went well: the test suite caught 3 real bugs before deploy
 - To improve: I'd design the data model before writing any code next time
 ```
+
+## Why it matters
+
+Nobody reading your GitHub profile is going to run your code to figure out what it does -- the README is the whole pitch, and if it can't get a stranger from clone to running app in a couple of minutes, most people won't try. The retrospective matters for a different reason: it's evidence you can look at your own work critically, which is exactly what separates "I followed a tutorial" from "I built and shipped something."
+
+## Common mistakes
+
+- Writing a README that's just the project title and a screenshot, with no installation or usage instructions -- that's the single biggest reason a good project gets skipped over.
+- Leaving the README for the very last step, rushed, after the actual build energy is gone -- it ends up thinner and less accurate than the project deserves.
+- Writing a retrospective that only lists what went well -- "everything went great" reads as unreflective and skips the part that's actually useful to a reader (or to you, next project).
+- Assuming the code speaks for itself and skipping a demo or usage example entirely -- without one, reviewers have to dig through source just to see the thing actually work.
 
 ## Key points
 
