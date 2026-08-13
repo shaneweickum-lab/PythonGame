@@ -58,8 +58,10 @@ export function BambooEditor() {
   const [lintIssues, setLintIssues] = useState<LintIssue[]>([]);
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(() => searchParams.get("fullscreen") === "1");
+  const [editorHeight, setEditorHeight] = useState("24rem");
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const editorWrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sketchRef = useRef<Sketch | null>(null);
   const editorViewRef = useRef<EditorView | null>(null);
@@ -148,6 +150,27 @@ export function BambooEditor() {
     document.addEventListener("fullscreenchange", onFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
+
+  // CodeMirror's `height` prop can't just be "100%" here: percentage
+  // heights only resolve if every ancestor between our wrapper div and
+  // @uiw/react-codemirror's internal .cm-editor node has a definite
+  // height, and at least one of its internal wrapper divs doesn't --
+  // so .cm-editor silently falls back to its content height instead of
+  // the available space, and our wrapper's overflow-hidden then clips
+  // any code past that point with no way to scroll to it. Measuring the
+  // wrapper's actual pixel height and passing that as a concrete value
+  // sidesteps the whole percentage-chain problem.
+  useEffect(() => {
+    if (!fullscreen) return;
+    const el = editorWrapperRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height;
+      if (height) setEditorHeight(`${height}px`);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [fullscreen]);
 
   useEffect(() => {
     // Nothing to clear when there's no project: the project-chips row below
@@ -703,13 +726,14 @@ export function BambooEditor() {
       <div className={`grid gap-4 lg:grid-cols-2 ${fullscreen ? "min-h-0 flex-1" : ""}`}>
         <div className={`space-y-2 ${fullscreen ? "flex h-full min-h-0 flex-col" : ""}`}>
           <div
+            ref={editorWrapperRef}
             onKeyDown={handleEditorKeyDown}
             className={`overflow-hidden rounded-md border border-slate-700 focus-within:border-emerald-500 [&_.cm-editor]:h-full [&_.cm-scroller]:font-mono [&_.cm-scroller]:text-sm ${fullscreen ? "min-h-0 flex-1" : ""}`}
           >
             <CodeMirror
               value={code}
               onChange={(value) => setCode(value)}
-              height={fullscreen ? "100%" : "24rem"}
+              height={fullscreen ? editorHeight : "24rem"}
               theme={oneDark}
               basicSetup={{ tabSize: 4 }}
               extensions={editorExtensions}
