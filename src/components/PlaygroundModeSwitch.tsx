@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { PlaygroundClient } from "@/components/PlaygroundClient";
 import { BambooEditor } from "@/components/bamboo/BambooEditor";
 
@@ -12,7 +13,8 @@ const MODES: { value: Mode; label: string; desc: string }[] = [
 ];
 
 export function PlaygroundModeSwitch() {
-  const [mode, setMode] = useState<Mode>("python");
+  const searchParams = useSearchParams();
+  const [mode, setMode] = useState<Mode>(searchParams.get("mode") === "bamboo" ? "bamboo" : "python");
   const active = MODES.find((m) => m.value === mode)!;
 
   return (
