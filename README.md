@@ -201,3 +201,13 @@ other page requires a live database.
     writing/running/linting/single-file examples; only Save/Open and
     multi-file example projects need it, matching how the rest of the
     app degrades gracefully.
+  - `BambooEditor` has a Fullscreen toggle (a `fixed inset-0` overlay that
+    hides the site's own nav, plus a best-effort real Fullscreen API call
+    that's allowed to silently fail -- e.g. iOS Safari -- since the CSS
+    overlay alone already fills the browser window) and an "Open in new
+    tab" button, so the IDE and its output can each be maximized in
+    separate browser windows and placed side by side. That button carries
+    the current file id and a `fullscreen=1` flag via URL params
+    (`/playground?mode=bamboo&fullscreen=1&file=<id>`), which
+    `PlaygroundModeSwitch`/`BambooEditor` read on load to preselect the
+    mode, open that saved file, and start already maximized.

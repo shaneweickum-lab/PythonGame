@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 import { indentUnit } from "@codemirror/language";
@@ -41,6 +42,7 @@ type TerminalLine = { text: string; isError?: boolean };
 const configured = isSupabaseConfigured();
 
 export function BambooEditor() {
+  const searchParams = useSearchParams();
   const [code, setCode] = useState(DEFAULT_SOURCE);
   const [filename, setFilename] = useState("main.bs");
   const [currentFileId, setCurrentFileId] = useState<string | null>(null);
@@ -55,7 +57,9 @@ export function BambooEditor() {
   const [terminalInputValue, setTerminalInputValue] = useState("");
   const [lintIssues, setLintIssues] = useState<LintIssue[]>([]);
   const [examplesOpen, setExamplesOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(() => searchParams.get("fullscreen") === "1");
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sketchRef = useRef<Sketch | null>(null);
   const editorViewRef = useRef<EditorView | null>(null);
@@ -123,8 +127,26 @@ export function BambooEditor() {
     if (!configured) return;
     bambooStorage
       .listFiles()
-      .then(setFiles)
+      .then((list) => {
+        setFiles(list);
+        // Deep link from "Open in new tab" (?file=<id>) -- open it once we
+        // know it's actually in the list, rather than racing openFile()
+        // against this same fetch.
+        const fileId = searchParams.get("file");
+        if (fileId && list.some((f) => f.id === fileId)) {
+          openFile(fileId);
+        }
+      })
       .catch(() => setStatus("Couldn't load your saved sketches."));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    function onFullscreenChange() {
+      if (!document.fullscreenElement) setFullscreen(false);
+    }
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
 
   useEffect(() => {
@@ -236,6 +258,30 @@ export function BambooEditor() {
     sketchRef.current?.stop();
     setTerminalPrompt(null);
     setStatus("Stopped.");
+  }
+
+  async function toggleFullscreen() {
+    const next = !fullscreen;
+    setFullscreen(next);
+    try {
+      if (next && containerRef.current && document.fullscreenElement !== containerRef.current) {
+        await containerRef.current.requestFullscreen();
+      } else if (!next && document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // Native Fullscreen API unavailable or denied (e.g. iOS Safari,
+      // embedded contexts) -- the CSS-overlay fullscreen above still
+      // applies, so the IDE still fills the browser window either way.
+    }
+  }
+
+  function openInNewTab() {
+    const params = new URLSearchParams({ mode: "bamboo", fullscreen: "1" });
+    if (configured && currentFileIdRef.current) {
+      params.set("file", currentFileIdRef.current);
+    }
+    window.open(`/playground?${params.toString()}`, "_blank", "noopener,noreferrer,width=1000,height=900");
   }
 
   function newFile() {
@@ -496,15 +542,22 @@ export function BambooEditor() {
   }
 
   return (
-    <div className="space-y-4">
+    <div
+      ref={containerRef}
+      className={
+        fullscreen
+          ? "fixed inset-0 z-50 flex h-screen flex-col gap-4 overflow-hidden bg-slate-950 p-4"
+          : "space-y-4"
+      }
+    >
       {!configured && (
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+        <div className="shrink-0 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
           Supabase isn&apos;t configured for this session -- you can still write, run, and explore
           examples, but saving sketches and multi-file projects need it. See .env.local.example.
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
         <input
           value={filename}
           onChange={(e) => setFilename(e.target.value)}
@@ -584,10 +637,29 @@ export function BambooEditor() {
             ))}
           </select>
         )}
+
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={openInNewTab}
+            title="Open this sketch in a new browser tab -- handy for putting the editor and the output side by side"
+            className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800"
+          >
+            ⧉ Open in new tab
+          </button>
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            title={fullscreen ? "Exit fullscreen" : "Fill the browser window with the IDE"}
+            className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800"
+          >
+            {fullscreen ? "⤡ Exit fullscreen" : "⛶ Fullscreen"}
+          </button>
+        </div>
       </div>
 
       {currentProjectId && (
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
           {projectFiles.map((f) => (
             <button
               key={f.id}
@@ -614,16 +686,16 @@ export function BambooEditor() {
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="space-y-2">
+      <div className={`grid gap-4 lg:grid-cols-2 ${fullscreen ? "min-h-0 flex-1" : ""}`}>
+        <div className={`space-y-2 ${fullscreen ? "flex h-full min-h-0 flex-col" : ""}`}>
           <div
             onKeyDown={handleEditorKeyDown}
-            className="overflow-hidden rounded-md border border-slate-700 focus-within:border-emerald-500 [&_.cm-editor]:h-full [&_.cm-scroller]:font-mono [&_.cm-scroller]:text-sm"
+            className={`overflow-hidden rounded-md border border-slate-700 focus-within:border-emerald-500 [&_.cm-editor]:h-full [&_.cm-scroller]:font-mono [&_.cm-scroller]:text-sm ${fullscreen ? "min-h-0 flex-1" : ""}`}
           >
             <CodeMirror
               value={code}
               onChange={(value) => setCode(value)}
-              height="24rem"
+              height={fullscreen ? "100%" : "24rem"}
               theme={oneDark}
               basicSetup={{ tabSize: 4 }}
               extensions={editorExtensions}
@@ -673,8 +745,8 @@ export function BambooEditor() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex gap-1 rounded-md border border-slate-800 bg-slate-900 p-1" role="tablist">
+        <div className={`space-y-2 ${fullscreen ? "flex h-full min-h-0 flex-col" : ""}`}>
+          <div className="flex shrink-0 gap-1 rounded-md border border-slate-800 bg-slate-900 p-1" role="tablist">
             {(["canvas", "terminal", "reference"] as const).map((tab) => (
               <button
                 key={tab}
@@ -691,7 +763,10 @@ export function BambooEditor() {
             ))}
           </div>
 
-          <div style={{ height: "24rem" }} className="overflow-hidden rounded-md border border-slate-800 bg-black">
+          <div
+            style={fullscreen ? undefined : { height: "24rem" }}
+            className={`overflow-hidden rounded-md border border-slate-800 bg-black ${fullscreen ? "min-h-0 flex-1" : ""}`}
+          >
             {activeTab === "canvas" && (
               <div className="flex h-full flex-col">
                 <div className="flex flex-1 items-center justify-center overflow-auto p-2">
