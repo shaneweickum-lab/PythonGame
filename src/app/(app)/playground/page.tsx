@@ -1,5 +1,5 @@
-import { PlaygroundClient } from "@/components/PlaygroundClient";
+import { PlaygroundModeSwitch } from "@/components/PlaygroundModeSwitch";
 
 export default function PlaygroundPage() {
-  return <PlaygroundClient />;
+  return <PlaygroundModeSwitch />;
 }

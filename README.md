@@ -1,18 +1,24 @@
 # Python Mastery Tracker
 
-A personal learning dashboard for tracking progress through a structured,
+A personal learning platform for tracking progress through a structured,
 zero-to-expert Python roadmap: a phase-by-phase curriculum of 75 concepts
 (strings, f-strings, tuples, OOP, decorators, and everything between,
 heaviest in the true-fundamentals phases) each paired with its own
 micro-project, on top of one integrative mini-project and a running
 spine-project milestone per phase, auto-graded coding challenges, an
-in-browser Python playground, spaced repetition flashcards, and a journal.
+in-browser Python playground, spaced repetition flashcards, a journal, and
+gamification (XP/levels/streaks/achievements). The Playground also has a
+BambooScript mode -- a Python-like language that draws to a canvas
+(p5.js/Processing-style), ported in from the standalone BambooGrove IDE
+project into this platform's own editor and account system.
 
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind CSS
 - Supabase (Postgres + Auth, single-user)
 - Pyodide (Python via WebAssembly, runs entirely in the browser)
+- BambooScript: a hand-written lexer/parser/transpiler + canvas runtime
+  (`src/lib/bamboo/`), ported from the standalone BambooGrove IDE repo
 - Deploys to Vercel
 
 ## Setup
@@ -40,6 +46,7 @@ supabase/migrations/0002_add_challenges.sql
 supabase/migrations/0003_project_concept_link.sql
 supabase/migrations/0004_lessons_and_concept_challenges.sql
 supabase/migrations/0005_gamification.sql
+supabase/migrations/0006_bamboo.sql
 # seed data, in order
 supabase/seed.sql                              # phases, original 9 mini/spine projects, flashcards
 supabase/seed_challenges.sql                    # 18 phase-level auto-graded challenges
@@ -105,7 +112,9 @@ other page requires a live database.
 - `/challenges`, `/challenges/[challengeId]` -- auto-graded coding
   exercises (phase-level and concept-level); write a solution, hit Run
   Tests, and it's marked solved automatically when every case passes
-- `/playground` -- Pyodide-powered Python editor and console
+- `/playground` -- a mode switch between real Python (Pyodide) and
+  BambooScript (canvas/turtle graphics, terminal mode, multi-file
+  projects, a linter, and a bundled examples browser)
 - `/spine` -- read-only log of the spine project's evolution across phases
 - `/review` -- SM-2-style spaced repetition flashcard review
 - `/journal` -- reflections across all phases
@@ -162,3 +171,33 @@ other page requires a live database.
   exists only so streaks know which calendar days had activity --
   `StatusToggle`/`ChallengeRunner` set it alongside `status` whenever
   something is marked done, and clear it if unmarked.
+- **BambooScript** (`src/lib/bamboo/`) is a full port of the standalone
+  BambooGrove IDE project: a hand-written lexer/parser/transpiler for a
+  Python-like language, a canvas + turtle-graphics runtime, a Terminal
+  mode (`print()`/genuinely-pausing `input()`), a multi-file module
+  system, and a learner-focused linter -- copied over verbatim (framework-
+  agnostic, no DOM coupling beyond a `<canvas>` element the `Sketch`
+  class in `sandbox.js` is handed) rather than rewritten, so it stays a
+  faithful, easy-to-update mirror of the upstream project. `sandbox.d.ts`
+  is a companion type declaration for `sandbox.js` (plain JS, untyped) --
+  without it, TypeScript infers an overly-narrow callback signature from
+  the file's own default-parameter values.
+  - `BambooEditor` (`src/components/bamboo/`) is the React shell replacing
+    BambooGrove's original vanilla-JS `app.js`/`ide.html`: CodeMirror
+    (Python mode reused for close-enough syntax highlighting) instead of
+    the original textarea+overlay editor, but the same Canvas/Terminal/
+    Reference tabs, lint panel, file toolbar, and examples browser.
+  - Project storage moved from the original's `localStorage`-only design
+    to Supabase (`bamboo_files`, migration 0006; `src/lib/bambooStorage.ts`)
+    so sketches sync to the same account as everything else in this app.
+    A project's own file list has to be fetched into memory *before*
+    calling into the (synchronous) module-resolution code in
+    `src/lib/bamboo/modules.js` -- `fetchModuleSourceLookup` does that
+    fetch, then hands back a plain sync lookup function.
+  - Bundled example `.bs` files live in `public/bamboo-examples/` (static,
+    fetched at runtime, same as upstream) rather than in the database --
+    they're bundled content, not user data.
+  - Without Supabase configured, BambooScript still fully works for
+    writing/running/linting/single-file examples; only Save/Open and
+    multi-file example projects need it, matching how the rest of the
+    app degrades gracefully.
