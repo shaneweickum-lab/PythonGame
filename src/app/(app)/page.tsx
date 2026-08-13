@@ -119,6 +119,16 @@ export default async function DashboardPage() {
 
   const nextItem = unfinished[0];
 
+  const firstPhase =
+    typedPhases.length > 0
+      ? typedPhases.reduce((min, p) => (p.order_index < min.order_index ? p : min))
+      : null;
+  const firstPhaseConcepts = firstPhase
+    ? typedConcepts.filter((c) => c.phase_id === firstPhase.id)
+    : [];
+  const foundationsDone =
+    firstPhaseConcepts.length > 0 && firstPhaseConcepts.every((c) => c.status === "done");
+
   return (
     <div className="space-y-8">
       <div>
@@ -127,6 +137,20 @@ export default async function DashboardPage() {
           Your progress through the Python zero-to-expert roadmap.
         </p>
       </div>
+
+      {firstPhase && !foundationsDone && (
+        <Link
+          href="/foundations"
+          className="block rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4 hover:border-emerald-500/70 hover:bg-emerald-500/15"
+        >
+          <div className="text-sm font-medium text-emerald-300">
+            🌱 New to Python? Start with Foundations
+          </div>
+          <div className="mt-1 text-xs text-emerald-400/80">
+            A guided walkthrough of core syntax, in order, for zero prior experience →
+          </div>
+        </Link>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="rounded-lg border border-slate-800 bg-slate-900 p-5">
@@ -203,6 +227,7 @@ export default async function DashboardPage() {
         </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
+            { href: "/foundations", label: "Foundations", desc: "Start here with zero experience" },
             { href: "/challenges", label: "Challenges", desc: "Auto-graded coding exercises" },
             { href: "/playground", label: "Playground", desc: "Run Python in the browser" },
             { href: "/spine", label: "Spine Project", desc: "One project, every phase" },

@@ -101,6 +101,13 @@ other page requires a live database.
   item, due flashcards
 - `/achievements` -- your level and XP breakdown, current/longest streak,
   and the full badge trophy case
+- `/foundations` -- a welcoming, zero-experience-assumed entry point for
+  people who've never coded: just Phase 1's 14 syntax concepts presented
+  as an ordered path, with a progress bar and a closing link to
+  `/challenges`. Not separate content -- it queries the same `concepts`
+  rows Phase 1 already has (first phase by `order_index`), so there's one
+  source of truth for the lessons regardless of which page you reach them
+  from.
 - `/roadmap`, `/roadmap/[phaseId]` -- phase list and detail; every concept
   shows its own status toggle plus, when one exists, its linked
   micro-project nested right underneath, followed by that phase's
