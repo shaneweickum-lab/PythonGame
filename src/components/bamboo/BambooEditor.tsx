@@ -222,9 +222,23 @@ export function BambooEditor() {
     const mode: "canvas" | "terminal" = activeTabRef.current === "terminal" ? "terminal" : "canvas";
     if (wasReference) setActiveTab("canvas");
 
-    const mainSource =
-      projectId && fileId !== projectId ? await bambooStorage.getFile(projectId) : codeRef.current;
-    const getModuleSource = projectId ? await fetchModuleSourceLookup(projectId) : () => null;
+    let mainSource: string;
+    let getModuleSource: (name?: string) => string | null;
+    try {
+      mainSource =
+        projectId && fileId !== projectId ? await bambooStorage.getFile(projectId) : codeRef.current;
+      getModuleSource = projectId ? await fetchModuleSourceLookup(projectId) : () => null;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const fullMessage = `Couldn't load this project's files -- ${message}`;
+      setStatus(fullMessage);
+      if (mode === "terminal") {
+        appendTerminalLine(fullMessage, true);
+      } else {
+        setCanvasError({ message: fullMessage, line: null });
+      }
+      return;
+    }
 
     const sketch = sketchRef.current;
     if (!sketch) return;
