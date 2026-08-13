@@ -1,0 +1,141 @@
+# Smart missiles (spec 3.6-adjacent): a genetic algorithm, Coding Train /
+# Nature of Code "Smart Rockets" style. A static target sits on the far
+# side of a wall. Generation 1's rockets fly random, mostly useless paths -
+# some crash into the wall, most just fly off into space. Every rocket's
+# final distance to the target becomes its fitness; the next generation's
+# DNA is bred from the fittest survivors (with a little random mutation),
+# so each generation aims a bit better than the last, until the population
+# reliably threads around the wall and hits the target dead-on.
+#
+# Built as a two-file project (spec section 6) - see rocket.bs for the
+# genetics/physics helpers this file imports. To try it in the IDE: save
+# this as main.bs, click the "+" chip above the editor to add a project
+# file, name it rocket.bs, and paste in rocket.bs's contents.
+
+import rocket
+
+POP_SIZE = 20
+LIFESPAN = 200
+MAX_FORCE = 0.3
+MAX_SPEED = 5
+MUTATION_RATE = 0.02
+
+START_X = 240
+START_Y = 460
+TARGET_X = 400
+TARGET_Y = 50
+TARGET_R = 12
+
+WALL_X = 140
+WALL_Y = 260
+WALL_W = 200
+WALL_H = 24
+
+generation = 1
+tick = 0
+
+rocket_pos = []
+rocket_vel = []
+rocket_dna = []
+rocket_done = []
+rocket_hit_wall = []
+rocket_reached = []
+
+def setup():
+    background(10, 12, 18)
+    for i in range(POP_SIZE):
+        rocket_pos.append(createVector(START_X, START_Y))
+        rocket_vel.append(createVector(0, 0))
+        rocket_dna.append(rocket.make_dna(LIFESPAN, MAX_FORCE))
+        rocket_done.append(False)
+        rocket_hit_wall.append(False)
+        rocket_reached.append(False)
+
+def draw():
+    background(10, 12, 18, 50)
+
+    no_stroke()
+    fill(210, 80, 80)
+    rect(WALL_X, WALL_Y, WALL_W, WALL_H)
+
+    no_stroke()
+    fill(90, 220, 140)
+    circle(TARGET_X, TARGET_Y, TARGET_R * 2)
+
+    active = 0
+    for i in range(POP_SIZE):
+        pos = rocket_pos[i]
+        vel = rocket_vel[i]
+
+        if not rocket_done[i]:
+            force = rocket_dna[i][tick]
+            vel.add(force)
+            vel.limit(MAX_SPEED)
+            pos.add(vel)
+
+            if rocket.point_in_rect(pos.x, pos.y, WALL_X, WALL_Y, WALL_W, WALL_H):
+                rocket_done[i] = True
+                rocket_hit_wall[i] = True
+            elif dist(pos.x, pos.y, TARGET_X, TARGET_Y) < TARGET_R:
+                rocket_done[i] = True
+                rocket_reached[i] = True
+            elif pos.x < 0 or pos.x > width or pos.y < 0 or pos.y > height:
+                rocket_done[i] = True
+
+        if not rocket_done[i]:
+            active = active + 1
+
+        no_stroke()
+        if rocket_reached[i]:
+            fill(120, 255, 170)
+        elif rocket_hit_wall[i]:
+            fill(230, 90, 90)
+        else:
+            fill(240, 200, 90)
+        circle(pos.x, pos.y, 6)
+
+    fill(230, 230, 220)
+    textSize(14)
+    text(f"generation {generation}   tick {tick}/{LIFESPAN}   active {active}", 14, 20)
+
+    tick = tick + 1
+    if active == 0:
+        tick = LIFESPAN
+    if tick >= LIFESPAN:
+        evolve()
+        tick = 0
+        generation = generation + 1
+
+def evolve():
+    fits = []
+    total = 0
+    best_i = 0
+    for i in range(POP_SIZE):
+        pos = rocket_pos[i]
+        fit = rocket.fitness_of(
+            pos.x, pos.y, TARGET_X, TARGET_Y, rocket_hit_wall[i], rocket_reached[i]
+        )
+        fits.append(fit)
+        total = total + fit
+        if fit > fits[best_i]:
+            best_i = i
+
+    # Elitism: the single best DNA of this generation always survives to
+    # the next completely unchanged, so a winning path is never lost to an
+    # unlucky mutation - the rest of the population is bred normally.
+    next_dna = [rocket_dna[best_i]]
+    for i in range(POP_SIZE - 1):
+        a = rocket.pick_parent(fits, total)
+        b = rocket.pick_parent(fits, total)
+        child = rocket.crossover(rocket_dna[a], rocket_dna[b], LIFESPAN)
+        rocket.mutate(child, LIFESPAN, MUTATION_RATE, MAX_FORCE)
+        next_dna.append(child)
+
+    rocket_dna = next_dna
+
+    for i in range(POP_SIZE):
+        rocket_pos[i] = createVector(START_X, START_Y)
+        rocket_vel[i] = createVector(0, 0)
+        rocket_done[i] = False
+        rocket_hit_wall[i] = False
+        rocket_reached[i] = False

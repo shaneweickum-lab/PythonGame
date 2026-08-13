@@ -68,6 +68,14 @@ export type Challenge = {
   completed_at: string | null;
 };
 
+export type BambooFile = {
+  id: string;
+  project_id: string;
+  name: string;
+  content: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -107,6 +115,12 @@ export type Database = {
         Insert: Partial<Challenge> &
           Pick<Challenge, "title" | "prompt" | "starter_code" | "test_code">;
         Update: Partial<Challenge>;
+        Relationships: [];
+      };
+      bamboo_files: {
+        Row: BambooFile;
+        Insert: Partial<BambooFile> & Pick<BambooFile, "id" | "project_id" | "name">;
+        Update: Partial<BambooFile>;
         Relationships: [];
       };
     };

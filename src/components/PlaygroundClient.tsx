@@ -16,7 +16,7 @@ type ProjectOption = {
   title: string;
 };
 
-export function PlaygroundClient() {
+export function PlaygroundClient({ hideHeader = false }: { hideHeader?: boolean } = {}) {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -52,13 +52,15 @@ export function PlaygroundClient() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-100">Playground</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Runs entirely in your browser via Pyodide (Python compiled to
-          WebAssembly) -- no server execution involved.
-        </p>
-      </div>
+      {!hideHeader && (
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-100">Playground</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Runs entirely in your browser via Pyodide (Python compiled to
+            WebAssembly) -- no server execution involved.
+          </p>
+        </div>
+      )}
 
       <PyodideEditor
         ref={editorRef}

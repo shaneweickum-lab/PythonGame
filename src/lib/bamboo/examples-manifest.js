@@ -1,0 +1,125 @@
+// Metadata for the in-app "Examples" picker (src/app.js). This is
+// deliberately metadata-only — the actual .bs source stays in examples/*.bs
+// and is fetched on demand at load time, so examples/*.bs remains the one
+// place that content lives (both for browsing on GitHub and for loading
+// into the IDE itself), instead of duplicating source into this file.
+export const EXAMPLES = [
+  {
+    id: "hexagon",
+    title: "Hexagon",
+    description: "Turtle graphics: a for-loop draws a hexagon.",
+    mode: "canvas",
+    files: [{ name: "main.bs", path: "/bamboo-examples/hexagon.bs" }],
+  },
+  {
+    id: "octagon",
+    title: "Octagon",
+    description: "Turtle graphics: a for-loop draws an octagon.",
+    mode: "canvas",
+    files: [{ name: "main.bs", path: "/bamboo-examples/octagon.bs" }],
+  },
+  {
+    id: "square",
+    title: "Square (while loop)",
+    description: "The same turtle movement, using a while loop instead of range().",
+    mode: "canvas",
+    files: [{ name: "main.bs", path: "/bamboo-examples/square.bs" }],
+  },
+  {
+    id: "bamboo_stalk",
+    title: "Bamboo stalk",
+    description: "The spec's own loops lesson: draw a bamboo stalk with a while loop.",
+    mode: "canvas",
+    files: [{ name: "main.bs", path: "/bamboo-examples/bamboo_stalk.bs" }],
+  },
+  {
+    id: "p5_style_orbit",
+    title: "p5.js-style orbit",
+    description: "push()/translate()/rotate() plus a mousePressed() event callback.",
+    mode: "canvas",
+    files: [{ name: "main.bs", path: "/bamboo-examples/p5_style_orbit.bs" }],
+  },
+  {
+    id: "terminal_quiz",
+    title: "Terminal quiz",
+    description: "Plain print()/input() scripting in the Terminal tab.",
+    mode: "terminal",
+    files: [{ name: "main.bs", path: "/bamboo-examples/terminal_quiz.bs" }],
+  },
+  {
+    id: "terminal_string_lab",
+    title: "String lab (Python-compatible)",
+    description: "upper()/split()/title()/join()/... - copy-paste this into real Python and it runs the same.",
+    mode: "terminal",
+    files: [{ name: "main.bs", path: "/bamboo-examples/terminal_string_lab.bs" }],
+  },
+  {
+    id: "terminal_calculator",
+    title: "Terminal calculator",
+    description: "input() plus the float()/str() data-conversion builtins.",
+    mode: "terminal",
+    files: [{ name: "main.bs", path: "/bamboo-examples/terminal_calculator.bs" }],
+  },
+  {
+    id: "modules_demo",
+    title: "Modules: panda drawing",
+    description: "A two-file project using import / from ... import.",
+    mode: "canvas",
+    files: [
+      { name: "main.bs", path: "/bamboo-examples/modules_main.bs" },
+      { name: "panda.bs", path: "/bamboo-examples/modules_panda.bs" },
+    ],
+  },
+  {
+    id: "phase2_demo",
+    title: "Vectors, noise & custom shapes",
+    description: "createVector(), noise(), bezier(), and beginShape()/vertex()/endShape().",
+    mode: "canvas",
+    files: [{ name: "main.bs", path: "/bamboo-examples/phase2_demo.bs" }],
+  },
+  {
+    id: "hsb_rainbow",
+    title: "HSB rainbow ring",
+    description: "colorMode(\"hsb\") spinning a rainbow of circles.",
+    mode: "canvas",
+    files: [{ name: "main.bs", path: "/bamboo-examples/hsb_rainbow.bs" }],
+  },
+  {
+    id: "smart_missiles",
+    title: "Smart missiles (genetic algorithm)",
+    description: "A population of rockets evolves — selection, crossover, mutation — to hit a target past a wall.",
+    mode: "canvas",
+    files: [
+      { name: "main.bs", path: "/bamboo-examples/smart_missiles/main.bs" },
+      { name: "rocket.bs", path: "/bamboo-examples/smart_missiles/rocket.bs" },
+    ],
+  },
+  {
+    id: "stdlib_string_demo",
+    title: "Python's string module",
+    description: "import string - ascii_letters/digits/punctuation, matching CPython's own values.",
+    mode: "terminal",
+    files: [{ name: "main.bs", path: "/bamboo-examples/stdlib_string_demo.bs" }],
+  },
+  {
+    id: "in_operator_demo",
+    title: "'in' / 'not in'",
+    description: "Membership tests against strings and lists, matching Python exactly.",
+    mode: "terminal",
+    files: [{ name: "main.bs", path: "/bamboo-examples/in_operator_demo.bs" }],
+  },
+  {
+    id: "exceptions_demo",
+    title: "try / except / raise",
+    description: "Catching ValueError/IndexError, else/finally, and raising your own errors.",
+    mode: "terminal",
+    files: [{ name: "main.bs", path: "/bamboo-examples/exceptions_demo.bs" }],
+  },
+  {
+    id: "numeric_model_demo",
+    title: "int vs. float, // and %",
+    description: "4/2 -> 2.0, floor division, Python's floored modulo, and ZeroDivisionError.",
+    mode: "terminal",
+    files: [{ name: "main.bs", path: "/bamboo-examples/numeric_model_demo.bs" }],
+  },
+];
