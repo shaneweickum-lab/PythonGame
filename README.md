@@ -2,14 +2,16 @@
 
 A personal learning platform that takes someone from never having written a
 line of code to building ML algorithms from scratch: a phase-by-phase
-curriculum of 130 concepts across 16 phases -- Phases 1-9 cover true Python
-fundamentals through a capstone (strings, f-strings, tuples, OOP,
-decorators, and everything between), and Phases 10-16 build an ML track on
-top of it (NumPy/linear algebra, pandas, classical ML with scikit-learn,
-model evaluation, neural networks from scratch, and an ML capstone). Every
-concept is paired with its own micro-project, on top of one integrative
-mini-project per phase (plus a running spine-project milestone through the
-original 9 phases), 813 auto-graded coding challenges, an in-browser Python
+curriculum of 132 concepts across 16 phases -- Phase 1 opens with two
+zero-assumed-knowledge lessons on what code/an interpreter even is and how
+indentation works, before Phases 1-9 cover true Python fundamentals through
+a capstone (strings, f-strings, tuples, OOP, decorators, and everything
+between), and Phases 10-16 build an ML track on top of it (NumPy/linear
+algebra, pandas, classical ML with scikit-learn, model evaluation, neural
+networks from scratch, and an ML capstone). Every concept is paired with
+its own micro-project, on top of one integrative mini-project per phase
+(plus a running spine-project milestone through the original 9 phases), 820
+auto-graded coding challenges, an in-browser Python
 playground, spaced repetition flashcards, a journal, and gamification
 (XP/levels/streaks/achievements). The Playground also has a BambooScript
 mode -- a Python-like language that draws to a canvas (p5.js/Processing-
@@ -57,14 +59,16 @@ supabase/seed_challenges.sql                    # 18 phase-level auto-graded cha
 supabase/seed_curriculum_expanded.sql           # 75 concepts + their micro-projects
 supabase/seed_lessons_and_concept_challenges.sql # lesson content + 4 challenges per concept (300 total)
 supabase/seed_ml_track.sql                      # Phases 10-16: 55 concepts, 495 challenges, 62 projects
+supabase/seed_foundations_prereq.sql            # 2 zero-knowledge concepts before Phase 1's "Variables"
 ```
 
 All files have been validated against a local Postgres instance, and every
-challenge's reference solution -- all 813 of them, phase-level and
+challenge's reference solution -- all 820 of them, phase-level and
 concept-level -- was run end-to-end (the original 318 through Pyodide, the
-495 new ML challenges through native Python with numpy/pandas/scikit-learn/
-scipy/matplotlib installed, as a high-confidence proxy for Pyodide's
-identical package versions) to confirm its tests actually pass.
+495 ML challenges through native Python with numpy/pandas/scikit-learn/
+scipy/matplotlib installed as a high-confidence proxy for Pyodide's
+identical package versions, and the 7 new foundations challenges through
+native Python) to confirm its tests actually pass.
 
 **`seed_ml_track.sql` adds Phases 10-16 on top of everything above** -- no
 schema changes needed, since `projects`/`challenges`/`concepts` already
@@ -74,6 +78,16 @@ phases or the spine project, which deliberately concludes its retrospective
 at the Phase 9 Capstone rather than extending into the ML phases -- the new
 phases get mini-projects only. Safe to run (once) any time after
 `seed_lessons_and_concept_challenges.sql`.
+
+**`seed_foundations_prereq.sql` inserts two new concepts before Phase 1's
+"Variables & dynamic typing"** -- "What is code, and how does Python run
+it?" and "Indentation & Python's block structure" -- shifting the existing
+14 Phase 1 concepts from `order_index` 1-14 to 3-16, and lightly revises 6
+of those 14 lessons' wording so their vocabulary (syntax vs. runtime error,
+console, interpreter, indentation) lines up with the new foundation instead
+of re-deriving or leaving it unexplained. Safe to run (once) any time after
+`seed_ml_track.sql` -- it only shifts `order_index` and inserts/updates
+rows, it doesn't delete anything.
 
 **`seed_curriculum_expanded.sql` replaces the `concepts` table contents**
 (it `DELETE`s the original ~45 broad concepts and inserts the expanded set
