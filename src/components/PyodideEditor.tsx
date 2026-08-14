@@ -84,6 +84,7 @@ export const PyodideEditor = forwardRef<
 
     const runCode = buildRunCode ? buildRunCode(code) : code;
     try {
+      await pyodide.loadPackagesFromImports(runCode);
       await pyodide.runPythonAsync(runCode);
     } catch (err) {
       appendLine(err instanceof Error ? err.message : String(err));
