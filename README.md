@@ -1,16 +1,20 @@
 # Python Mastery Tracker
 
-A personal learning platform for tracking progress through a structured,
-zero-to-expert Python roadmap: a phase-by-phase curriculum of 75 concepts
-(strings, f-strings, tuples, OOP, decorators, and everything between,
-heaviest in the true-fundamentals phases) each paired with its own
-micro-project, on top of one integrative mini-project and a running
-spine-project milestone per phase, auto-graded coding challenges, an
-in-browser Python playground, spaced repetition flashcards, a journal, and
-gamification (XP/levels/streaks/achievements). The Playground also has a
-BambooScript mode -- a Python-like language that draws to a canvas
-(p5.js/Processing-style), ported in from the standalone BambooGrove IDE
-project into this platform's own editor and account system.
+A personal learning platform that takes someone from never having written a
+line of code to building ML algorithms from scratch: a phase-by-phase
+curriculum of 130 concepts across 16 phases -- Phases 1-9 cover true Python
+fundamentals through a capstone (strings, f-strings, tuples, OOP,
+decorators, and everything between), and Phases 10-16 build an ML track on
+top of it (NumPy/linear algebra, pandas, classical ML with scikit-learn,
+model evaluation, neural networks from scratch, and an ML capstone). Every
+concept is paired with its own micro-project, on top of one integrative
+mini-project per phase (plus a running spine-project milestone through the
+original 9 phases), 813 auto-graded coding challenges, an in-browser Python
+playground, spaced repetition flashcards, a journal, and gamification
+(XP/levels/streaks/achievements). The Playground also has a BambooScript
+mode -- a Python-like language that draws to a canvas (p5.js/Processing-
+style), ported in from the standalone BambooGrove IDE project into this
+platform's own editor and account system.
 
 ## Stack
 
@@ -52,12 +56,24 @@ supabase/seed.sql                              # phases, original 9 mini/spine p
 supabase/seed_challenges.sql                    # 18 phase-level auto-graded challenges
 supabase/seed_curriculum_expanded.sql           # 75 concepts + their micro-projects
 supabase/seed_lessons_and_concept_challenges.sql # lesson content + 4 challenges per concept (300 total)
+supabase/seed_ml_track.sql                      # Phases 10-16: 55 concepts, 495 challenges, 62 projects
 ```
 
 All files have been validated against a local Postgres instance, and every
-challenge's reference solution -- all 318 of them, phase-level and
-concept-level -- was run end-to-end through Pyodide to confirm its tests
-actually pass.
+challenge's reference solution -- all 813 of them, phase-level and
+concept-level -- was run end-to-end (the original 318 through Pyodide, the
+495 new ML challenges through native Python with numpy/pandas/scikit-learn/
+scipy/matplotlib installed, as a high-confidence proxy for Pyodide's
+identical package versions) to confirm its tests actually pass.
+
+**`seed_ml_track.sql` adds Phases 10-16 on top of everything above** -- no
+schema changes needed, since `projects`/`challenges`/`concepts` already
+support everything an ML phase needs (`concept_id` linking, lesson content,
+the `'micro'`/`'mini'` project types). It doesn't touch the original 9
+phases or the spine project, which deliberately concludes its retrospective
+at the Phase 9 Capstone rather than extending into the ML phases -- the new
+phases get mini-projects only. Safe to run (once) any time after
+`seed_lessons_and_concept_challenges.sql`.
 
 **`seed_curriculum_expanded.sql` replaces the `concepts` table contents**
 (it `DELETE`s the original ~45 broad concepts and inserts the expanded set
