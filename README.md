@@ -264,3 +264,14 @@ other page requires a live database.
     (`/playground?mode=bamboo&fullscreen=1&file=<id>`), which
     `PlaygroundModeSwitch`/`BambooEditor` read on load to preselect the
     mode, open that saved file, and start already maximized.
+
+## Future plans
+
+- **A VS Code extension for real PyTorch/TensorFlow** -- Pyodide (this
+  app's in-browser Python runtime) has no build of either, which is why
+  the ML track teaches deep learning from scratch in NumPy instead. The
+  plan for eventually teaching the real frameworks is a VS Code extension
+  that reuses this same Supabase curriculum/grading model but executes
+  code against the learner's real local Python instead of Pyodide, rather
+  than turning this platform into its own desktop app. Not started --
+  see `docs/vscode-extension-plan.md` for the full writeup.
