@@ -31,15 +31,23 @@ export function ReviewSession({ initialCards }: { initialCards: Flashcard[] }) {
     const update = scheduleNextReview(current, chosenGrade, new Date());
 
     const supabase = createClient();
-    const { error } = await supabase
-      .from("flashcards")
-      .update({
-        ease_factor: update.ease_factor,
-        interval_days: update.interval_days,
-        next_review_at: update.next_review_at,
-        last_reviewed_at: new Date().toISOString(),
-      })
-      .eq("id", current.id);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { error } = !user
+      ? { error: new Error("Not signed in") }
+      : await supabase.from("flashcard_progress").upsert(
+          {
+            user_id: user.id,
+            flashcard_id: current.id,
+            ease_factor: update.ease_factor,
+            interval_days: update.interval_days,
+            next_review_at: update.next_review_at,
+            last_reviewed_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,flashcard_id" },
+        );
 
     setGrading(false);
 

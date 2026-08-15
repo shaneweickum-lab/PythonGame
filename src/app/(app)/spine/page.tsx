@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { ProgressBar } from "@/components/ProgressBar";
-import type { Phase, Project } from "@/lib/supabase/types";
+import { PROJECT_CONTENT_COLUMNS, mergeProjects } from "@/lib/progress";
+import type { Phase, Project, ProjectContent, ProjectProgress } from "@/lib/supabase/types";
 
 const STATUS_LABEL: Record<Project["status"], string> = {
   not_started: "Not started",
@@ -33,17 +34,21 @@ export default async function SpinePage() {
 
   const supabase = await createClient();
 
-  const [{ data: phases }, { data: spineProjects }] = await Promise.all([
+  const [{ data: phases }, { data: spineProjects }, { data: projectProgress }] = await Promise.all([
     supabase.from("phases").select("*").order("order_index"),
     supabase
       .from("projects")
-      .select("*")
+      .select(PROJECT_CONTENT_COLUMNS)
       .eq("project_type", "spine")
       .order("phase_id"),
+    supabase.from("project_progress").select("*"),
   ]);
 
   const typedPhases = (phases ?? []) as Phase[];
-  const typedProjects = (spineProjects ?? []) as Project[];
+  const typedProjects = mergeProjects(
+    (spineProjects ?? []) as ProjectContent[],
+    (projectProgress ?? []) as ProjectProgress[],
+  );
   const projectByPhase = new Map(typedProjects.map((p) => [p.phase_id, p]));
 
   const orderedEntries = typedPhases

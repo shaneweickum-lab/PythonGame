@@ -5,7 +5,24 @@ import { LevelCard } from "@/components/LevelCard";
 import { StreakCard } from "@/components/StreakCard";
 import { BadgeGrid } from "@/components/BadgeGrid";
 import { computeGamification } from "@/lib/gamification";
-import type { Challenge, Concept, JournalEntry, Phase, Project } from "@/lib/supabase/types";
+import {
+  CHALLENGE_CONTENT_COLUMNS,
+  CONCEPT_CONTENT_COLUMNS,
+  PROJECT_CONTENT_COLUMNS,
+  mergeChallenges,
+  mergeConcepts,
+  mergeProjects,
+} from "@/lib/progress";
+import type {
+  ChallengeContent,
+  ChallengeProgress,
+  ConceptContent,
+  ConceptProgress,
+  JournalEntry,
+  Phase,
+  ProjectContent,
+  ProjectProgress,
+} from "@/lib/supabase/types";
 
 export default async function AchievementsPage() {
   if (!isSupabaseConfigured()) {
@@ -24,20 +41,44 @@ export default async function AchievementsPage() {
 
   const supabase = await createClient();
 
-  const [{ data: phases }, { data: concepts }, { data: projects }, { data: challenges }, { data: journalEntries }] =
-    await Promise.all([
-      supabase.from("phases").select("*").order("order_index"),
-      supabase.from("concepts").select("*"),
-      supabase.from("projects").select("*"),
-      supabase.from("challenges").select("*"),
-      supabase.from("journal_entries").select("*"),
-    ]);
+  const [
+    { data: phases },
+    { data: concepts },
+    { data: conceptProgress },
+    { data: projects },
+    { data: projectProgress },
+    { data: challenges },
+    { data: challengeProgress },
+    { data: journalEntries },
+  ] = await Promise.all([
+    supabase.from("phases").select("*").order("order_index"),
+    supabase.from("concepts").select(CONCEPT_CONTENT_COLUMNS),
+    supabase.from("concept_progress").select("*"),
+    supabase.from("projects").select(PROJECT_CONTENT_COLUMNS),
+    supabase.from("project_progress").select("*"),
+    supabase.from("challenges").select(CHALLENGE_CONTENT_COLUMNS),
+    supabase.from("challenge_progress").select("*"),
+    supabase.from("journal_entries").select("*"),
+  ]);
+
+  const typedConcepts = mergeConcepts(
+    (concepts ?? []) as ConceptContent[],
+    (conceptProgress ?? []) as ConceptProgress[],
+  );
+  const typedProjects = mergeProjects(
+    (projects ?? []) as ProjectContent[],
+    (projectProgress ?? []) as ProjectProgress[],
+  );
+  const typedChallenges = mergeChallenges(
+    (challenges ?? []) as ChallengeContent[],
+    (challengeProgress ?? []) as ChallengeProgress[],
+  );
 
   const { xp, level, streak, badges } = computeGamification({
     phases: (phases ?? []) as Phase[],
-    concepts: (concepts ?? []) as Concept[],
-    projects: (projects ?? []) as Project[],
-    challenges: (challenges ?? []) as Challenge[],
+    concepts: typedConcepts,
+    projects: typedProjects,
+    challenges: typedChallenges,
     journalEntries: (journalEntries ?? []) as JournalEntry[],
   });
 

@@ -10,35 +10,74 @@ export type Phase = {
   is_spine_track: boolean;
 };
 
-export type Concept = {
+// Shared curriculum content -- identical for every account, read-only from
+// the client. Per-user state (status, completed_at, ...) lives in the
+// matching *_progress table and is joined in by src/lib/progress.ts's merge
+// helpers into the combined types below, which is what the rest of the app
+// (components, gamification) actually renders.
+export type ConceptContent = {
   id: string;
   phase_id: string;
   order_index: number;
   title: string;
   notes: string | null;
-  status: ConceptStatus;
   lesson_content: string | null;
+};
+
+export type ConceptProgress = {
+  user_id: string;
+  concept_id: string;
+  status: ConceptStatus;
   completed_at: string | null;
 };
 
-export type Project = {
+export type Concept = ConceptContent & {
+  status: ConceptStatus;
+  completed_at: string | null;
+};
+
+export type ProjectContent = {
   id: string;
   phase_id: string;
   concept_id: string | null;
   title: string;
   description: string | null;
   project_type: ProjectType;
+};
+
+export type ProjectProgress = {
+  user_id: string;
+  project_id: string;
   status: ConceptStatus;
   code_snapshot: string | null;
   notes: string | null;
   completed_at: string | null;
 };
 
-export type Flashcard = {
+export type Project = ProjectContent & {
+  status: ConceptStatus;
+  code_snapshot: string | null;
+  notes: string | null;
+  completed_at: string | null;
+};
+
+export type FlashcardContent = {
   id: string;
   phase_id: string | null;
   question: string;
   answer: string;
+};
+
+export type FlashcardProgress = {
+  user_id: string;
+  flashcard_id: string;
+  ease_factor: number;
+  interval_days: number;
+  next_review_at: string;
+  last_reviewed_at: string | null;
+};
+
+export type Flashcard = FlashcardContent & {
   ease_factor: number;
   interval_days: number;
   next_review_at: string;
@@ -50,9 +89,10 @@ export type JournalEntry = {
   phase_id: string | null;
   content: string;
   created_at: string;
+  user_id: string | null;
 };
 
-export type Challenge = {
+export type ChallengeContent = {
   id: string;
   phase_id: string | null;
   concept_id: string | null;
@@ -63,6 +103,17 @@ export type Challenge = {
   hint: string | null;
   starter_code: string;
   test_code: string;
+};
+
+export type ChallengeProgress = {
+  user_id: string;
+  challenge_id: string;
+  status: ConceptStatus;
+  code_snapshot: string | null;
+  completed_at: string | null;
+};
+
+export type Challenge = ChallengeContent & {
   status: ConceptStatus;
   code_snapshot: string | null;
   completed_at: string | null;
@@ -74,6 +125,7 @@ export type BambooFile = {
   name: string;
   content: string;
   updated_at: string;
+  user_id: string | null;
 };
 
 export type Database = {
@@ -86,22 +138,40 @@ export type Database = {
         Relationships: [];
       };
       concepts: {
-        Row: Concept;
-        Insert: Partial<Concept> & Pick<Concept, "phase_id" | "title">;
-        Update: Partial<Concept>;
+        Row: ConceptContent;
+        Insert: Partial<ConceptContent> & Pick<ConceptContent, "phase_id" | "title">;
+        Update: Partial<ConceptContent>;
+        Relationships: [];
+      };
+      concept_progress: {
+        Row: ConceptProgress;
+        Insert: Partial<ConceptProgress> & Pick<ConceptProgress, "concept_id">;
+        Update: Partial<ConceptProgress>;
         Relationships: [];
       };
       projects: {
-        Row: Project;
-        Insert: Partial<Project> &
-          Pick<Project, "phase_id" | "title" | "project_type">;
-        Update: Partial<Project>;
+        Row: ProjectContent;
+        Insert: Partial<ProjectContent> &
+          Pick<ProjectContent, "phase_id" | "title" | "project_type">;
+        Update: Partial<ProjectContent>;
+        Relationships: [];
+      };
+      project_progress: {
+        Row: ProjectProgress;
+        Insert: Partial<ProjectProgress> & Pick<ProjectProgress, "project_id">;
+        Update: Partial<ProjectProgress>;
         Relationships: [];
       };
       flashcards: {
-        Row: Flashcard;
-        Insert: Partial<Flashcard> & Pick<Flashcard, "question" | "answer">;
-        Update: Partial<Flashcard>;
+        Row: FlashcardContent;
+        Insert: Partial<FlashcardContent> & Pick<FlashcardContent, "question" | "answer">;
+        Update: Partial<FlashcardContent>;
+        Relationships: [];
+      };
+      flashcard_progress: {
+        Row: FlashcardProgress;
+        Insert: Partial<FlashcardProgress> & Pick<FlashcardProgress, "flashcard_id">;
+        Update: Partial<FlashcardProgress>;
         Relationships: [];
       };
       journal_entries: {
@@ -111,10 +181,16 @@ export type Database = {
         Relationships: [];
       };
       challenges: {
-        Row: Challenge;
-        Insert: Partial<Challenge> &
-          Pick<Challenge, "title" | "prompt" | "starter_code" | "test_code">;
-        Update: Partial<Challenge>;
+        Row: ChallengeContent;
+        Insert: Partial<ChallengeContent> &
+          Pick<ChallengeContent, "title" | "prompt" | "starter_code" | "test_code">;
+        Update: Partial<ChallengeContent>;
+        Relationships: [];
+      };
+      challenge_progress: {
+        Row: ChallengeProgress;
+        Insert: Partial<ChallengeProgress> & Pick<ChallengeProgress, "challenge_id">;
+        Update: Partial<ChallengeProgress>;
         Relationships: [];
       };
       bamboo_files: {
