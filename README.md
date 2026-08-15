@@ -154,7 +154,12 @@ other page requires a live database.
   and up to 4 auto-graded challenges to solidify it
 - `/challenges`, `/challenges/[challengeId]` -- auto-graded coding
   exercises (phase-level and concept-level); write a solution, hit Run
-  Tests, and it's marked solved automatically when every case passes
+  Tests, and it's marked solved automatically when every case passes.
+  `/challenges` itself (`ChallengesBrowser`) groups all 800+ challenges by
+  phase, collapsed by default (auto-opening whichever phase you haven't
+  finished yet) with a search box and difficulty/status filters -- a flat
+  list of every challenge stopped being usable once the ML track alone
+  added ~500 more.
 - `/playground` -- a mode switch between real Python (Pyodide) and
   BambooScript (canvas/turtle graphics, terminal mode, multi-file
   projects, a linter, and a bundled examples browser)
