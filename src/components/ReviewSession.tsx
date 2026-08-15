@@ -58,7 +58,7 @@ export function ReviewSession({ initialCards }: { initialCards: Flashcard[] }) {
       <div className="rounded-lg border border-slate-800 bg-slate-900 px-4 py-8 text-center">
         <p className="text-sm text-slate-400">No flashcards are due right now.</p>
         <Link
-          href="/"
+          href="/dashboard"
           className="mt-3 inline-block text-sm font-medium text-emerald-400 hover:text-emerald-300"
         >
           Back to dashboard →
@@ -75,7 +75,7 @@ export function ReviewSession({ initialCards }: { initialCards: Flashcard[] }) {
           You reviewed {reviewedCount} card{reviewedCount === 1 ? "" : "s"}.
         </p>
         <Link
-          href="/"
+          href="/dashboard"
           className="mt-3 inline-block text-sm font-medium text-emerald-400 hover:text-emerald-300"
         >
           Back to dashboard →

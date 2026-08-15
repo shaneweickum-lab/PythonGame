@@ -127,20 +127,26 @@ other page requires a live database.
 
 ## Project structure
 
-- `/` -- dashboard: level/XP, streak, overall progress, next unfinished
-  item, due flashcards
+- `/` -- a public marketing landing page (no auth required): hero, feature
+  highlights, and a preview of the four learning tiers, all pointing at
+  `/login`. Signed-in visitors are bounced straight to `/dashboard` instead
+  of seeing it.
+- `/dashboard` -- level/XP, streak, overall progress, next unfinished item,
+  due flashcards, and quick links into each learning tier
 - `/achievements` -- your level and XP breakdown, current/longest streak,
   and the full badge trophy case
 - `/foundations` -- a welcoming, zero-experience-assumed entry point for
-  people who've never coded: just Phase 1's 14 syntax concepts presented
+  people who've never coded: just Phase 1's 16 syntax concepts presented
   as an ordered path, with a progress bar and a closing link to
   `/challenges`. Not separate content -- it queries the same `concepts`
   rows Phase 1 already has (first phase by `order_index`), so there's one
   source of truth for the lessons regardless of which page you reach them
   from.
-- `/roadmap`, `/roadmap/[phaseId]` -- phase list and detail; every concept
-  shows its own status toggle plus, when one exists, its linked
-  micro-project nested right underneath, followed by that phase's
+- `/roadmap`, `/roadmap/[phaseId]` -- phase list and detail, grouped into
+  four tiers (Beginner, Intermediate, Advanced, Algorithms) with anchor
+  links (`#beginner` etc.) the nav's Learning dropdown jumps to directly;
+  every concept shows its own status toggle plus, when one exists, its
+  linked micro-project nested right underneath, followed by that phase's
   integrative mini-project and spine milestone
 - `/learn/[conceptId]` -- a concept's dedicated lesson page: written
   explanation with code examples, an embedded playground pre-seeded with
@@ -198,6 +204,16 @@ other page requires a live database.
   as static assets). On screens below Tailwind's `md` breakpoint, the
   top nav (`NavLinks`) hides and a fixed bottom tab bar (`MobileTabBar`)
   takes over, matching a native mobile app's navigation pattern.
+- Nav structure lives in one place, `src/lib/nav-config.ts` (`NAV_ENTRIES`):
+  a mix of plain links (Dashboard, Playground) and dropdown groups
+  ("Learning" -- Beginner/Intermediate/Advanced/Algorithms/Challenges,
+  linking into `/roadmap`'s tier anchors plus `/challenges`; "More" -- the
+  less-frequent pages). `NavLinks` renders groups as click-to-open desktop
+  dropdowns; `MobileTabBar` renders the same groups as a tap-to-open sheet
+  above the bottom tab bar. Both derive active-state from the same
+  `isNavLinkActive` helper, so a page can be "active" in more than one
+  group at once if it's linked from both (e.g. any `/roadmap` page lights
+  up both Learning and More, since More also links to the full roadmap).
 - Gamification (`src/lib/gamification.ts`) is computed live from current
   `status`/`completed_at` on concepts/projects/challenges plus journal
   entry timestamps -- there's no separate XP ledger or "badge unlocked"

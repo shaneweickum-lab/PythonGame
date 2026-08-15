@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Py Mastery",
     description:
       "A personal dashboard for tracking a zero-to-expert Python learning roadmap.",
-    start_url: "/",
+    start_url: "/dashboard",
     display: "standalone",
     orientation: "portrait-primary",
     background_color: "#020617",
