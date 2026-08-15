@@ -2,8 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseConfigured } from "./config";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback"];
-const AUTH_FORM_PATHS = ["/login", "/signup"];
+// "/" is the public marketing landing page -- an exact match, not a prefix,
+// since every path technically "starts with" "/" and that would make the
+// whole app public.
+const PUBLIC_EXACT_PATHS = ["/"];
+const PUBLIC_PREFIX_PATHS = ["/login", "/signup", "/auth/callback"];
+// Signed-in users get bounced off these to /dashboard instead of seeing them.
+const SIGNED_IN_REDIRECT_PATHS = ["/", "/login", "/signup"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -36,9 +41,10 @@ export async function updateSession(request: NextRequest) {
   );
 
   const { data } = await supabase.auth.getUser();
-  const isPublicPath = PUBLIC_PATHS.some((path) =>
-    request.nextUrl.pathname.startsWith(path),
-  );
+  const pathname = request.nextUrl.pathname;
+  const isPublicPath =
+    PUBLIC_EXACT_PATHS.includes(pathname) ||
+    PUBLIC_PREFIX_PATHS.some((path) => pathname.startsWith(path));
 
   if (!data.user && !isPublicPath) {
     const loginUrl = request.nextUrl.clone();
@@ -47,11 +53,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (data.user && AUTH_FORM_PATHS.includes(request.nextUrl.pathname)) {
-    const homeUrl = request.nextUrl.clone();
-    homeUrl.pathname = "/";
-    homeUrl.search = "";
-    return NextResponse.redirect(homeUrl);
+  if (data.user && SIGNED_IN_REDIRECT_PATHS.includes(pathname)) {
+    const dashboardUrl = request.nextUrl.clone();
+    dashboardUrl.pathname = "/dashboard";
+    dashboardUrl.search = "";
+    return NextResponse.redirect(dashboardUrl);
   }
 
   return supabaseResponse;

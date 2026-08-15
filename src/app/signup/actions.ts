@@ -20,7 +20,7 @@ export async function signUp(
   }
 
   if (data.session) {
-    redirect("/");
+    redirect("/dashboard");
   }
 
   return {

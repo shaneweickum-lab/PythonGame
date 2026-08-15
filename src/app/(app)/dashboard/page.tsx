@@ -133,9 +133,7 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold text-slate-100">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Your progress through the Python zero-to-expert roadmap.
-        </p>
+        <p className="mt-1 text-sm text-slate-400">Welcome back -- here&apos;s where you left off.</p>
       </div>
 
       {firstPhase && !foundationsDone && (
@@ -152,25 +150,26 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <section className="rounded-lg border border-slate-800 bg-slate-900 p-5">
-          <LevelCard level={level} compact />
-        </section>
-        <section className="rounded-lg border border-slate-800 bg-slate-900 p-5">
-          <StreakCard streak={streak} />
-        </section>
-      </div>
-
       <section className="rounded-lg border border-slate-800 bg-slate-900 p-5">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Overall progress
-          </h2>
-          <Link href="/achievements" className="text-xs font-medium text-emerald-400 hover:text-emerald-300">
-            View achievements →
-          </Link>
+        <div className="grid gap-5 sm:grid-cols-3 sm:divide-x sm:divide-slate-800">
+          <div className="sm:pr-5">
+            <LevelCard level={level} compact />
+          </div>
+          <div className="sm:px-5">
+            <StreakCard streak={streak} />
+          </div>
+          <div className="sm:pl-5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Overall progress
+              </span>
+              <Link href="/achievements" className="text-xs font-medium text-emerald-400 hover:text-emerald-300">
+                Achievements →
+              </Link>
+            </div>
+            <ProgressBar done={doneItems} total={totalItems} className="mt-3" />
+          </div>
         </div>
-        <ProgressBar done={doneItems} total={totalItems} className="mt-3" />
       </section>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -223,16 +222,16 @@ export default async function DashboardPage() {
 
       <section>
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Quick links
+          Jump to a learning path
         </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { href: "/foundations", label: "Foundations", desc: "Start here with zero experience" },
-            { href: "/challenges", label: "Challenges", desc: "Auto-graded coding exercises" },
-            { href: "/playground", label: "Playground", desc: "Run Python in the browser" },
-            { href: "/spine", label: "Spine Project", desc: "One project, every phase" },
-            { href: "/journal", label: "Journal", desc: "All reflections in one place" },
-            { href: "/achievements", label: "Achievements", desc: "Level, streak, and badges" },
+            { href: "/roadmap#beginner", label: "Beginner", desc: "Syntax fluency & data structures" },
+            { href: "/roadmap#intermediate", label: "Intermediate", desc: "OOP, idioms, engineering discipline, systems" },
+            { href: "/roadmap#advanced", label: "Advanced", desc: "Specialization, capstone & the ML track" },
+            { href: "/roadmap#algorithms", label: "Algorithms", desc: "Interview-ready data structures & complexity" },
+            { href: "/challenges", label: "Challenges", desc: "Auto-graded coding exercises, every difficulty" },
+            { href: "/playground", label: "Playground", desc: "Run Python (or BambooScript) in the browser" },
           ].map((link) => (
             <Link
               key={link.href}

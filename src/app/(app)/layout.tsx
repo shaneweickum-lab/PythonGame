@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { NavLinks } from "@/components/NavLinks";
@@ -18,10 +19,13 @@ export default async function AppLayout({
       <header className="border-b border-slate-800 bg-slate-900/60">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-6">
-            <span className="text-sm font-semibold tracking-tight text-slate-100">
+            <Link
+              href="/dashboard"
+              className="text-sm font-semibold tracking-tight text-slate-100 hover:text-emerald-400"
+            >
               <span className="sm:hidden">🐍 Py Mastery</span>
               <span className="hidden sm:inline">🐍 Python Mastery Tracker</span>
-            </span>
+            </Link>
             <NavLinks />
           </div>
           {supabaseConfigured ? (
