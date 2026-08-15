@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { ChallengeRunner } from "@/components/ChallengeRunner";
-import type { Challenge, Phase } from "@/lib/supabase/types";
+import { CHALLENGE_CONTENT_COLUMNS, mergeChallenges } from "@/lib/progress";
+import type { ChallengeContent, ChallengeProgress, Phase } from "@/lib/supabase/types";
 
 export default async function ChallengeDetailPage({
   params,
@@ -23,17 +24,19 @@ export default async function ChallengeDetailPage({
   const { challengeId } = await params;
   const supabase = await createClient();
 
-  const { data: challenge } = await supabase
-    .from("challenges")
-    .select("*")
-    .eq("id", challengeId)
-    .single();
+  const [{ data: challenge }, { data: challengeProgress }] = await Promise.all([
+    supabase.from("challenges").select(CHALLENGE_CONTENT_COLUMNS).eq("id", challengeId).single(),
+    supabase.from("challenge_progress").select("*").eq("challenge_id", challengeId),
+  ]);
 
   if (!challenge) {
     notFound();
   }
 
-  const typedChallenge = challenge as Challenge;
+  const typedChallenge = mergeChallenges(
+    [challenge as ChallengeContent],
+    (challengeProgress ?? []) as ChallengeProgress[],
+  )[0];
 
   let phase: Phase | null = null;
   if (typedChallenge.phase_id) {

@@ -4,7 +4,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { StatusToggle } from "@/components/StatusToggle";
 import { ProgressBar } from "@/components/ProgressBar";
-import type { Concept, Phase } from "@/lib/supabase/types";
+import { CONCEPT_CONTENT_COLUMNS, mergeConcepts } from "@/lib/progress";
+import type { ConceptContent, ConceptProgress, Phase } from "@/lib/supabase/types";
 
 export default async function FoundationsPage() {
   if (!isSupabaseConfigured()) {
@@ -43,13 +44,19 @@ export default async function FoundationsPage() {
     );
   }
 
-  const { data: concepts } = await supabase
-    .from("concepts")
-    .select("*")
-    .eq("phase_id", typedPhase.id)
-    .order("order_index");
+  const [{ data: concepts }, { data: conceptProgress }] = await Promise.all([
+    supabase
+      .from("concepts")
+      .select(CONCEPT_CONTENT_COLUMNS)
+      .eq("phase_id", typedPhase.id)
+      .order("order_index"),
+    supabase.from("concept_progress").select("*"),
+  ]);
 
-  const typedConcepts = (concepts ?? []) as Concept[];
+  const typedConcepts = mergeConcepts(
+    (concepts ?? []) as ConceptContent[],
+    (conceptProgress ?? []) as ConceptProgress[],
+  );
   const done = typedConcepts.filter((c) => c.status === "done").length;
   const allDone = typedConcepts.length > 0 && done === typedConcepts.length;
 
@@ -103,7 +110,7 @@ export default async function FoundationsPage() {
               >
                 {c.title}
               </Link>
-              <StatusToggle table="concepts" id={c.id} status={c.status} />
+              <StatusToggle kind="concept" id={c.id} status={c.status} />
             </li>
           ))}
           {typedConcepts.length === 0 && (

@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { ReviewSession } from "@/components/ReviewSession";
-import type { Flashcard } from "@/lib/supabase/types";
+import { FLASHCARD_CONTENT_COLUMNS, mergeFlashcards } from "@/lib/progress";
+import type { FlashcardContent, FlashcardProgress } from "@/lib/supabase/types";
 
 export default async function ReviewPage() {
   if (!isSupabaseConfigured()) {
@@ -21,11 +22,18 @@ export default async function ReviewPage() {
 
   const supabase = await createClient();
 
-  const { data: dueCards } = await supabase
-    .from("flashcards")
-    .select("*")
-    .lte("next_review_at", new Date().toISOString())
-    .order("next_review_at");
+  const [{ data: flashcards }, { data: flashcardProgress }] = await Promise.all([
+    supabase.from("flashcards").select(FLASHCARD_CONTENT_COLUMNS),
+    supabase.from("flashcard_progress").select("*"),
+  ]);
+
+  const now = new Date().toISOString();
+  const dueCards = mergeFlashcards(
+    (flashcards ?? []) as FlashcardContent[],
+    (flashcardProgress ?? []) as FlashcardProgress[],
+  )
+    .filter((c) => c.next_review_at <= now)
+    .sort((a, b) => a.next_review_at.localeCompare(b.next_review_at));
 
   return (
     <div className="space-y-6">
@@ -36,7 +44,7 @@ export default async function ReviewPage() {
         </p>
       </div>
 
-      <ReviewSession initialCards={(dueCards ?? []) as Flashcard[]} />
+      <ReviewSession initialCards={dueCards} />
     </div>
   );
 }

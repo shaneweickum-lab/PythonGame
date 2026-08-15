@@ -6,7 +6,24 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { LevelCard } from "@/components/LevelCard";
 import { StreakCard } from "@/components/StreakCard";
 import { computeGamification } from "@/lib/gamification";
-import type { Challenge, Concept, JournalEntry, Phase, Project } from "@/lib/supabase/types";
+import {
+  CHALLENGE_CONTENT_COLUMNS,
+  CONCEPT_CONTENT_COLUMNS,
+  PROJECT_CONTENT_COLUMNS,
+  mergeChallenges,
+  mergeConcepts,
+  mergeProjects,
+} from "@/lib/progress";
+import type {
+  ChallengeContent,
+  ChallengeProgress,
+  ConceptContent,
+  ConceptProgress,
+  JournalEntry,
+  Phase,
+  ProjectContent,
+  ProjectProgress,
+} from "@/lib/supabase/types";
 
 type UnfinishedItem = {
   kind: "concept" | "project" | "challenge";
@@ -37,27 +54,49 @@ export default async function DashboardPage() {
   const [
     { data: phases },
     { data: concepts },
+    { data: conceptProgress },
     { data: projects },
+    { data: projectProgress },
     { data: challenges },
+    { data: challengeProgress },
     { data: journalEntries },
-    { count: dueCount },
+    { data: flashcardIds },
+    { data: flashcardProgress },
   ] = await Promise.all([
     supabase.from("phases").select("*").order("order_index"),
-    supabase.from("concepts").select("*"),
-    supabase.from("projects").select("*"),
-    supabase.from("challenges").select("*"),
+    supabase.from("concepts").select(CONCEPT_CONTENT_COLUMNS),
+    supabase.from("concept_progress").select("*"),
+    supabase.from("projects").select(PROJECT_CONTENT_COLUMNS),
+    supabase.from("project_progress").select("*"),
+    supabase.from("challenges").select(CHALLENGE_CONTENT_COLUMNS),
+    supabase.from("challenge_progress").select("*"),
     supabase.from("journal_entries").select("*"),
-    supabase
-      .from("flashcards")
-      .select("*", { count: "exact", head: true })
-      .lte("next_review_at", new Date().toISOString()),
+    supabase.from("flashcards").select("id"),
+    supabase.from("flashcard_progress").select("flashcard_id, next_review_at"),
   ]);
 
   const typedPhases = (phases ?? []) as Phase[];
-  const typedConcepts = (concepts ?? []) as Concept[];
-  const typedProjects = (projects ?? []) as Project[];
-  const typedChallenges = (challenges ?? []) as Challenge[];
+  const typedConcepts = mergeConcepts(
+    (concepts ?? []) as ConceptContent[],
+    (conceptProgress ?? []) as ConceptProgress[],
+  );
+  const typedProjects = mergeProjects(
+    (projects ?? []) as ProjectContent[],
+    (projectProgress ?? []) as ProjectProgress[],
+  );
+  const typedChallenges = mergeChallenges(
+    (challenges ?? []) as ChallengeContent[],
+    (challengeProgress ?? []) as ChallengeProgress[],
+  );
   const typedJournalEntries = (journalEntries ?? []) as JournalEntry[];
+
+  const now = new Date().toISOString();
+  const nextReviewById = new Map(
+    (flashcardProgress ?? []).map((p) => [p.flashcard_id, p.next_review_at]),
+  );
+  const dueCount = (flashcardIds ?? []).filter(
+    (f) => (nextReviewById.get(f.id) ?? "1970-01-01T00:00:00.000Z") <= now,
+  ).length;
 
   const { level, streak } = computeGamification({
     phases: typedPhases,

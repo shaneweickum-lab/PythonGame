@@ -7,7 +7,24 @@ import { StatusToggle } from "@/components/StatusToggle";
 import { ProgressBar } from "@/components/ProgressBar";
 import { JournalEntryForm } from "@/components/JournalEntryForm";
 import { JournalEntryList } from "@/components/JournalEntryList";
-import type { Challenge, Concept, Phase, Project } from "@/lib/supabase/types";
+import {
+  CHALLENGE_CONTENT_COLUMNS,
+  CONCEPT_CONTENT_COLUMNS,
+  PROJECT_CONTENT_COLUMNS,
+  mergeChallenges,
+  mergeConcepts,
+  mergeProjects,
+} from "@/lib/progress";
+import type {
+  Challenge,
+  ChallengeContent,
+  ChallengeProgress,
+  ConceptContent,
+  ConceptProgress,
+  Phase,
+  ProjectContent,
+  ProjectProgress,
+} from "@/lib/supabase/types";
 
 const CHALLENGE_STATUS_LABEL: Record<Challenge["status"], string> = {
   not_started: "Not started",
@@ -35,14 +52,32 @@ export default async function PhaseDetailPage({
   const [
     { data: phase },
     { data: concepts },
+    { data: conceptProgress },
     { data: projects },
+    { data: projectProgress },
     { data: challenges },
+    { data: challengeProgress },
     { data: journalEntries },
   ] = await Promise.all([
     supabase.from("phases").select("*").eq("id", phaseId).single(),
-    supabase.from("concepts").select("*").eq("phase_id", phaseId).order("order_index"),
-    supabase.from("projects").select("*").eq("phase_id", phaseId).order("project_type"),
-    supabase.from("challenges").select("*").eq("phase_id", phaseId).order("order_index"),
+    supabase
+      .from("concepts")
+      .select(CONCEPT_CONTENT_COLUMNS)
+      .eq("phase_id", phaseId)
+      .order("order_index"),
+    supabase.from("concept_progress").select("*"),
+    supabase
+      .from("projects")
+      .select(PROJECT_CONTENT_COLUMNS)
+      .eq("phase_id", phaseId)
+      .order("project_type"),
+    supabase.from("project_progress").select("*"),
+    supabase
+      .from("challenges")
+      .select(CHALLENGE_CONTENT_COLUMNS)
+      .eq("phase_id", phaseId)
+      .order("order_index"),
+    supabase.from("challenge_progress").select("*"),
     supabase
       .from("journal_entries")
       .select("*")
@@ -55,9 +90,18 @@ export default async function PhaseDetailPage({
   }
 
   const typedPhase = phase as Phase;
-  const typedConcepts = (concepts ?? []) as Concept[];
-  const typedProjects = (projects ?? []) as Project[];
-  const typedChallenges = (challenges ?? []) as Challenge[];
+  const typedConcepts = mergeConcepts(
+    (concepts ?? []) as ConceptContent[],
+    (conceptProgress ?? []) as ConceptProgress[],
+  );
+  const typedProjects = mergeProjects(
+    (projects ?? []) as ProjectContent[],
+    (projectProgress ?? []) as ProjectProgress[],
+  );
+  const typedChallenges = mergeChallenges(
+    (challenges ?? []) as ChallengeContent[],
+    (challengeProgress ?? []) as ChallengeProgress[],
+  );
   const items = [...typedConcepts, ...typedProjects, ...typedChallenges];
   const done = items.filter((i) => i.status === "done").length;
 
@@ -106,7 +150,7 @@ export default async function PhaseDetailPage({
                   >
                     {c.title}
                   </Link>
-                  <StatusToggle table="concepts" id={c.id} status={c.status} />
+                  <StatusToggle kind="concept" id={c.id} status={c.status} />
                 </div>
                 {micro && (
                   <div className="mt-2 flex items-center justify-between gap-3 rounded-md border border-slate-800 bg-slate-950/60 px-3 py-2">
@@ -118,7 +162,7 @@ export default async function PhaseDetailPage({
                         <p className="mt-0.5 text-xs text-slate-500">{micro.description}</p>
                       )}
                     </div>
-                    <StatusToggle table="projects" id={micro.id} status={micro.status} />
+                    <StatusToggle kind="project" id={micro.id} status={micro.status} />
                   </div>
                 )}
               </li>
@@ -147,7 +191,7 @@ export default async function PhaseDetailPage({
                     {p.project_type}
                   </span>
                 </div>
-                <StatusToggle table="projects" id={p.id} status={p.status} />
+                <StatusToggle kind="project" id={p.id} status={p.status} />
               </div>
               {p.description && (
                 <p className="mt-1 text-xs text-slate-500">{p.description}</p>

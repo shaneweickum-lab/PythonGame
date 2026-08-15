@@ -30,17 +30,28 @@ export function ChallengeRunner({ challenge }: { challenge: Challenge }) {
 
     if (isSupabaseConfigured() && editorRef.current) {
       const supabase = createClient();
-      const { error } = await supabase
-        .from("challenges")
-        .update({
-          status: nextStatus,
-          code_snapshot: editorRef.current.getCode(),
-          completed_at: nextStatus === "done" ? new Date().toISOString() : challenge.completed_at,
-        })
-        .eq("id", challenge.id);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      if (error) {
+      if (!user) {
         setSaveError(true);
+      } else {
+        const { error } = await supabase.from("challenge_progress").upsert(
+          {
+            user_id: user.id,
+            challenge_id: challenge.id,
+            status: nextStatus,
+            code_snapshot: editorRef.current.getCode(),
+            completed_at:
+              nextStatus === "done" ? new Date().toISOString() : challenge.completed_at,
+          },
+          { onConflict: "user_id,challenge_id" },
+        );
+
+        if (error) {
+          setSaveError(true);
+        }
       }
     }
     setChallengeStatus(nextStatus);

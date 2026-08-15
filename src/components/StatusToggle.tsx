@@ -22,12 +22,14 @@ const ACTIVE_STYLES: Record<ConceptStatus, string> = {
   done: "bg-emerald-500 text-slate-950 border-emerald-400",
 };
 
+type Kind = "concept" | "project" | "challenge";
+
 export function StatusToggle({
-  table,
+  kind,
   id,
   status,
 }: {
-  table: "concepts" | "projects" | "challenges";
+  kind: Kind;
   id: string;
   status: ConceptStatus;
 }) {
@@ -43,10 +45,38 @@ export function StatusToggle({
 
     startTransition(async () => {
       const supabase = createClient();
-      const { error } = await supabase
-        .from(table)
-        .update({ status: next, completed_at: next === "done" ? new Date().toISOString() : null })
-        .eq("id", id);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setCurrent(previous);
+        setError("Not signed in");
+        return;
+      }
+
+      const completed_at = next === "done" ? new Date().toISOString() : null;
+      const { error } =
+        kind === "concept"
+          ? await supabase
+              .from("concept_progress")
+              .upsert(
+                { user_id: user.id, concept_id: id, status: next, completed_at },
+                { onConflict: "user_id,concept_id" },
+              )
+          : kind === "project"
+            ? await supabase
+                .from("project_progress")
+                .upsert(
+                  { user_id: user.id, project_id: id, status: next, completed_at },
+                  { onConflict: "user_id,project_id" },
+                )
+            : await supabase
+                .from("challenge_progress")
+                .upsert(
+                  { user_id: user.id, challenge_id: id, status: next, completed_at },
+                  { onConflict: "user_id,challenge_id" },
+                );
 
       if (error) {
         setCurrent(previous);

@@ -72,7 +72,7 @@ export function PhaseCard({
                       >
                         {c.title}
                       </Link>
-                      <StatusToggle table="concepts" id={c.id} status={c.status} />
+                      <StatusToggle kind="concept" id={c.id} status={c.status} />
                     </div>
                     {micro && (
                       <div className="mt-1.5 flex items-center justify-between gap-3 rounded-md border border-slate-800 bg-slate-950/60 px-2 py-1">
@@ -86,7 +86,7 @@ export function PhaseCard({
                             </p>
                           )}
                         </div>
-                        <StatusToggle table="projects" id={micro.id} status={micro.status} />
+                        <StatusToggle kind="project" id={micro.id} status={micro.status} />
                       </div>
                     )}
                   </li>
@@ -114,7 +114,7 @@ export function PhaseCard({
                       {p.project_type}
                     </span>
                   </div>
-                  <StatusToggle table="projects" id={p.id} status={p.status} />
+                  <StatusToggle kind="project" id={p.id} status={p.status} />
                 </li>
               ))}
               {integrativeProjects.length === 0 && (

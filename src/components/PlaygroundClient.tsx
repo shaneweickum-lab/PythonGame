@@ -39,10 +39,23 @@ export function PlaygroundClient({ hideHeader = false }: { hideHeader?: boolean 
     if (!selectedProjectId || !editorRef.current) return;
     setSaveState("saving");
     const supabase = createClient();
-    const { error } = await supabase
-      .from("projects")
-      .update({ code_snapshot: editorRef.current.getCode() })
-      .eq("id", selectedProjectId);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setSaveState("error");
+      return;
+    }
+
+    const { error } = await supabase.from("project_progress").upsert(
+      {
+        user_id: user.id,
+        project_id: selectedProjectId,
+        code_snapshot: editorRef.current.getCode(),
+      },
+      { onConflict: "user_id,project_id" },
+    );
 
     setSaveState(error ? "error" : "saved");
     if (!error) {

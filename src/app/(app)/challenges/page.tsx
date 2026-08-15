@@ -3,7 +3,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { ProgressBar } from "@/components/ProgressBar";
 import { ChallengesBrowser } from "@/components/ChallengesBrowser";
-import type { Challenge, Phase } from "@/lib/supabase/types";
+import { CHALLENGE_CONTENT_COLUMNS, mergeChallenges } from "@/lib/progress";
+import type { ChallengeContent, ChallengeProgress, Phase } from "@/lib/supabase/types";
 
 export default async function ChallengesPage() {
   if (!isSupabaseConfigured()) {
@@ -21,13 +22,17 @@ export default async function ChallengesPage() {
   }
 
   const supabase = await createClient();
-  const [{ data: phases }, { data: challenges }] = await Promise.all([
+  const [{ data: phases }, { data: challenges }, { data: challengeProgress }] = await Promise.all([
     supabase.from("phases").select("*").order("order_index"),
-    supabase.from("challenges").select("*").order("order_index"),
+    supabase.from("challenges").select(CHALLENGE_CONTENT_COLUMNS).order("order_index"),
+    supabase.from("challenge_progress").select("*"),
   ]);
 
   const typedPhases = (phases ?? []) as Phase[];
-  const typedChallenges = (challenges ?? []) as Challenge[];
+  const typedChallenges = mergeChallenges(
+    (challenges ?? []) as ChallengeContent[],
+    (challengeProgress ?? []) as ChallengeProgress[],
+  );
   const done = typedChallenges.filter((c) => c.status === "done").length;
 
   return (

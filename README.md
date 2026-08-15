@@ -21,7 +21,9 @@ platform's own editor and account system.
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind CSS
-- Supabase (Postgres + Auth, single-user)
+- Supabase (Postgres + Auth) -- multi-account: every signed-in account gets
+  its own progress, gamification, journal, and BambooScript files, all over
+  one shared curriculum (see `supabase/migrations/0007_per_user_progress.sql`)
 - Pyodide (Python via WebAssembly, runs entirely in the browser)
 - BambooScript: a hand-written lexer/parser/transpiler + canvas runtime
   (`src/lib/bamboo/`), ported from the standalone BambooGrove IDE repo
@@ -53,6 +55,7 @@ supabase/migrations/0003_project_concept_link.sql
 supabase/migrations/0004_lessons_and_concept_challenges.sql
 supabase/migrations/0005_gamification.sql
 supabase/migrations/0006_bamboo.sql
+supabase/migrations/0007_per_user_progress.sql
 # seed data, in order
 supabase/seed.sql                              # phases, original 9 mini/spine projects, flashcards
 supabase/seed_challenges.sql                    # 18 phase-level auto-graded challenges
@@ -89,6 +92,23 @@ of re-deriving or leaving it unexplained. Safe to run (once) any time after
 `seed_ml_track.sql` -- it only shifts `order_index` and inserts/updates
 rows, it doesn't delete anything.
 
+**`migrations/0007_per_user_progress.sql` splits per-user progress out of
+shared curriculum content.** Before it, every table's RLS policy was "any
+authenticated user can do anything" and status/completed_at/code_snapshot/
+notes/flashcard-SM2 fields lived directly on the shared concepts/projects/
+challenges/flashcards rows -- meaning every signed-in account shared the
+exact same level, streak, badges, and status toggles. This migration adds
+`concept_progress`/`project_progress`/`challenge_progress`/`flashcard_progress`
+tables (each keyed by `user_id` + the item's id, RLS-scoped to `auth.uid()`)
+and a `user_id` column on `journal_entries`/`bamboo_files`. **It's an
+intentional reset of any progress recorded so far** -- the old shared
+columns never tracked which account set them, so there's nothing to
+attribute to a specific account. The old columns are left in place (unused,
+not dropped) rather than removed, so a stray missed code path fails loudly
+(an RLS permission error) instead of silently reintroducing the bug; a
+later cleanup migration can drop them once the new model has run for a
+while.
+
 **`seed_curriculum_expanded.sql` replaces the `concepts` table contents**
 (it `DELETE`s the original ~45 broad concepts and inserts the expanded set
 of 75, each linked to its own micro-project). It does not touch mini/spine
@@ -108,12 +128,14 @@ cp .env.local.example .env.local
 Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from
 your project's API settings.
 
-### 4. Create your login
+### 4. Create your login(s)
 
-This is a single-user app using Supabase Auth (email/password). Create your
-one user from the Supabase dashboard (Authentication -> Users -> Add user),
-or enable sign-ups and use `supabase.auth.signUp()` once from the browser
-console, then sign in at `/login`.
+Auth is email/password via Supabase Auth. Create a user from the Supabase
+dashboard (Authentication -> Users -> Add user), or enable sign-ups and use
+`/signup`, then sign in at `/login`. Every account gets its own progress,
+level/streak/badges, journal, and BambooScript files over the same shared
+curriculum -- signing into a different account never shows another
+account's data (enforced by RLS, see the Notes section below).
 
 ### 5. Run it
 
@@ -229,6 +251,24 @@ other page requires a live database.
   exists only so streaks know which calendar days had activity --
   `StatusToggle`/`ChallengeRunner` set it alongside `status` whenever
   something is marked done, and clear it if unmarked.
+- **Per-user progress** (migration 0007, `src/lib/progress.ts`): `concepts`/
+  `projects`/`challenges`/`flashcards` are shared curriculum content, read-only
+  from the client. Each has a matching `*_progress` table (`concept_progress`,
+  `project_progress`, `challenge_progress`, `flashcard_progress`) holding the
+  actual per-account `status`/`completed_at`/`code_snapshot`/notes/SM-2
+  fields, keyed by `(user_id, item_id)` with RLS scoped to `auth.uid()`.
+  Every page fetches the shared content plus the signed-in account's own
+  progress rows and joins them with `mergeConcepts`/`mergeProjects`/
+  `mergeChallenges`/`mergeFlashcards`, which produce the exact same combined
+  shape (`Concept`/`Project`/`Challenge`/`Flashcard`) the rest of the app
+  already expects -- so `StatusToggle`, `ChallengeRunner`, `PhaseCard`, etc.
+  render identically to before; only the data-fetching layer and the three
+  write paths (`StatusToggle`, `ChallengeRunner`, `PlaygroundClient`'s
+  "save to project", `ReviewSession`'s grading) changed, upserting into the
+  matching progress table instead of updating the shared content row.
+  `journal_entries`/`bamboo_files` are simpler -- they're already per-account
+  content, not shared curriculum, so they just got a `user_id` column and an
+  RLS policy instead of a separate progress table.
 - **BambooScript** (`src/lib/bamboo/`) is a full port of the standalone
   BambooGrove IDE project: a hand-written lexer/parser/transpiler for a
   Python-like language, a canvas + turtle-graphics runtime, a Terminal

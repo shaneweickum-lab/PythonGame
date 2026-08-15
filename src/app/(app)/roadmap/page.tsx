@@ -2,7 +2,19 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { NotConfiguredNotice } from "@/components/NotConfiguredNotice";
 import { PhaseCard } from "@/components/PhaseCard";
-import type { Concept, Phase, Project } from "@/lib/supabase/types";
+import {
+  CONCEPT_CONTENT_COLUMNS,
+  PROJECT_CONTENT_COLUMNS,
+  mergeConcepts,
+  mergeProjects,
+} from "@/lib/progress";
+import type {
+  ConceptContent,
+  ConceptProgress,
+  Phase,
+  ProjectContent,
+  ProjectProgress,
+} from "@/lib/supabase/types";
 
 type Tier = {
   id: string;
@@ -56,16 +68,29 @@ export default async function RoadmapPage() {
 
   const supabase = await createClient();
 
-  const [{ data: phases }, { data: concepts }, { data: projects }] =
-    await Promise.all([
-      supabase.from("phases").select("*").order("order_index"),
-      supabase.from("concepts").select("*").order("order_index"),
-      supabase.from("projects").select("*").order("title"),
-    ]);
+  const [
+    { data: phases },
+    { data: concepts },
+    { data: conceptProgress },
+    { data: projects },
+    { data: projectProgress },
+  ] = await Promise.all([
+    supabase.from("phases").select("*").order("order_index"),
+    supabase.from("concepts").select(CONCEPT_CONTENT_COLUMNS).order("order_index"),
+    supabase.from("concept_progress").select("*"),
+    supabase.from("projects").select(PROJECT_CONTENT_COLUMNS).order("title"),
+    supabase.from("project_progress").select("*"),
+  ]);
 
   const typedPhases = (phases ?? []) as Phase[];
-  const typedConcepts = (concepts ?? []) as Concept[];
-  const typedProjects = (projects ?? []) as Project[];
+  const typedConcepts = mergeConcepts(
+    (concepts ?? []) as ConceptContent[],
+    (conceptProgress ?? []) as ConceptProgress[],
+  );
+  const typedProjects = mergeProjects(
+    (projects ?? []) as ProjectContent[],
+    (projectProgress ?? []) as ProjectProgress[],
+  );
 
   return (
     <div className="space-y-6">
